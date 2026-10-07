@@ -1,6 +1,6 @@
 # Hof-Manager × EventRide — Reuse-Analyse
 
-**Stand:** 06.10.2026 · **Analysierte Codebasis:** EventRide `main` @ `25741fe` (Version 1.1.6+98)
+**Stand:** 06.10.2026 · **Analysierte Codebasis:** EventRide `main` @ `d4b5578` (Version 1.1.6+98)
 **Methode:** Vollständige Durchsicht von `lib/`, `functions/src/`, Rules, Build-/Deploy-Skripten und `public/`; Zählungen per Skript. LLM-Preise und Bildlimits am 06.10.2026 gegen die offizielle Anthropic-Doku geprüft.
 
 **Annahmen**
@@ -170,7 +170,7 @@ Wiederverwendbare Helfer darin: `sendNotification` (Multicast + Entfernen ungül
 - Riesige Seiten-Dateien mit eingebetteter Logik (bis 4.437 Zeilen), keine Tests.
 - Design ohne Tokens (siehe 1.7); das Umfärben eines Forks hieße Hunderte Literale anfassen.
 - FlutterFire-Pakete eine Generation zurück → Major-Upgrade nötig, egal ob Fork oder Neu.
-- Repo-Ballast: `1_uebungen/` (Übungsprojekt, getrackt), `web_assets/` (veraltet), `eventride_admin.html` (Duplikat), Story-Creator-Modus, Festl-Export-CSVs im Root. Eine davon (`festl_tickets_vollstaendig.csv`, mit Käufer-E-Mails) ist über `git add -A` im Build-Loop eingecheckt worden. `.git` ist 154 MB groß.
+- Repo-Ballast: `1_uebungen/` (Übungsprojekt, getrackt), `web_assets/` (veraltet), `eventride_admin.html` (Duplikat), Story-Creator-Modus. Über `git add -A` im Build-Loop sind außerdem projektfremde CSV-Dateien mit personenbezogenen Daten eingecheckt und gepusht worden (inzwischen per Umschreiben der Historie entfernt). `.git` ist 154 MB groß.
 - Functions ohne Region (US), alles in einer Datei, Secrets über `.env` statt Secret Manager.
 - Rollen über Whitelist/Dokumentfeld statt Claims.
 
@@ -296,7 +296,7 @@ Einstufung: **1:1** = kopieren, höchstens Imports/Namen ändern · **anpassen**
 
 ### 3.2 Bewusst nicht übernehmen
 
-Fahrten/Anfragen/Interessenten, Chat-System, Bewertungen/Trust-Level, Führerschein/Kennzeichen, Events/Event-Container, Story-Creator, Google Maps/Places, Block-/Report-System, `notifiers.dart` als globales Sammelbecken, `widget_tree.dart` (Stack-Shell mit Glas-Effekten), `background_widget.dart`, `SizeHelper`, `1_uebungen/`, `web_assets/`, Festl-CSVs.
+Fahrten/Anfragen/Interessenten, Chat-System, Bewertungen/Trust-Level, Führerschein/Kennzeichen, Events/Event-Container, Story-Creator, Google Maps/Places, Block-/Report-System, `notifiers.dart` als globales Sammelbecken, `widget_tree.dart` (Stack-Shell mit Glas-Effekten), `background_widget.dart`, `SizeHelper`, `1_uebungen/`, `web_assets/`.
 
 ### 3.3 Komplett neu zu bauen
 

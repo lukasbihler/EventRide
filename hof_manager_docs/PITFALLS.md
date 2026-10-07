@@ -1,6 +1,6 @@
 # PITFALLS — Lehren aus EventRide für den Hof-Manager
 
-**Stand:** 07.10.2026 · **Quelle:** EventRide-Repo (`main` @ `a99c54e`): `lib/`, `functions/src/`, Rules, Skripte, `CLAUDE.md`, Projekt-Notizen und die Git-Historie (366 Commits, davon **181 mit fix/bug/workaround/revert**, also knapp die Hälfte).
+**Stand:** 07.10.2026 · **Quelle:** EventRide-Repo (`main` @ `e55c9e6`): `lib/`, `functions/src/`, Rules, Skripte, `CLAUDE.md`, Projekt-Notizen und die Git-Historie (366 Commits, davon **181 mit fix/bug/workaround/revert**, also knapp die Hälfte).
 **Zweck:** Jedes Problem, das in EventRide spürbar Zeit gekostet hat, mit Beleg und einer **Regel**, die im Hof-Manager von Tag 1 gilt. Die verbindliche Umsetzung der Regeln steht in `CONVENTIONS.md`.
 
 **Format pro Eintrag:**
@@ -321,7 +321,7 @@
 - **Problem:** `scripts/build_loop.sh` committet mit `git add -A` **alles**, was im Arbeitsverzeichnis liegt.
 - **Kosten/Beleg:**
   - Feature-Arbeit verschwand unter „fix: auto-fix Iteration N": `1baf2b6` (neue Admin-Seite + 229 Zeilen Settings + Rules + Functions), `178d5a3` (893 Zeilen), `ef429ff` (747 Zeilen Manager-HTML), `5cf88ac` (`platform_pickers.dart`).
-  - Mitcommittet wurden `.claude/scheduled_tasks.lock`, `.firebase/*.cache` und `festl_tickets_vollstaendig.csv` **mit Käufer-E-Mails** (`0937597`).
+  - Mitcommittet wurden `.claude/scheduled_tasks.lock`, `.firebase/*.cache` und **projektfremde CSV-Dateien mit personenbezogenen Daten** (~770 Datensätze mit E-Mail, Geburtsdatum, Social-Handles). Weil das Repo öffentlich ist, mussten sie per Umschreiben der Historie und Force-Push wieder entfernt werden (07.10.2026). Kopien in GitHub-Caches lassen sich nur über den GitHub-Support löschen.
   - Die Historie ist dadurch für `git blame`/`bisect` wertlos.
 - **Regel:** **Skripte committen niemals Code.** Ein Build-Skript darf höchstens die Versionsdatei committen, mit explizitem Pfad. Im ganzen Projekt gibt es kein `git add -A`/`git add .`; gestaget wird nur mit expliziten Pfaden.
 
