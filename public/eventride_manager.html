@@ -1716,6 +1716,7 @@ function renderInApp() {
         <span style="font-size:12px;color:#999;flex:1">${appEvents.length} Events live in Firebase — Echtzeit-Sync</span>
         <button class="small${appSortMode==='datum'?' active-sort':''}" onclick="appSortMode='datum';render()" style="font-size:11px;padding:2px 8px">Datum</button>
         <button class="small${appSortMode==='createdAt'?' active-sort':''}" onclick="appSortMode='createdAt';render()" style="font-size:11px;padding:2px 8px">Hochgeladen</button>
+        <button class="small" onclick="exportUpcomingCsv()" title="Bevorstehende Events (Name, Datum, Standort) als CSV herunterladen" style="font-size:11px;padding:2px 8px">⬇ CSV</button>
       </div>
       <div class="event-list-wrap">
         ${sorted.length===0
@@ -1731,6 +1732,49 @@ function renderInApp() {
     </div>
     ${sel?`<div>${appEventDetail(sel)}</div>`:""}
   </div>`;
+}
+
+// Bevorstehende App-Events als CSV (nur Name, Datum, Standort — ohne Adresse).
+// Container werden als eine Zeile mit Datumsbereich exportiert, adminOnly-Events
+// fehlen, weil normale Nutzer sie in der App nicht sehen.
+function exportUpcomingCsv() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const childrenByContainer = {};
+  appEvents.forEach(e => {
+    if (e.containerId) (childrenByContainer[e.containerId] = childrenByContainer[e.containerId] || []).push(e);
+  });
+
+  const rows = appEvents
+    .filter(e => !e.containerId && !e.adminOnly)
+    .map(ev => {
+      let von = parseDatum(ev.datum), bis = von;
+      if (ev.isContainer) {
+        const days = (childrenByContainer[ev._id] || []).map(k => parseDatum(k.datum)).filter(Boolean).sort((a,b) => a-b);
+        if (days.length) { von = days[0]; bis = days[days.length-1]; }
+      }
+      return { ev, von, bis };
+    })
+    .filter(r => r.bis && r.bis >= today)
+    .sort((a,b) => a.von - b.von);
+
+  if (rows.length === 0) { alert("Keine bevorstehenden Events gefunden."); return; }
+
+  const d2 = d => d.toLocaleDateString("de-AT",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const cell = v => `"${String(v||"").replace(/"/g,'""')}"`;
+  const lines = [["Eventname","Datum","Standort"].map(cell).join(";")];
+  rows.forEach(({ev, von, bis}) => {
+    const datum = bis - von > 0 ? `${d2(von)} – ${d2(bis)}` : d2(von);
+    lines.push([ev.name, datum, ev.gemeinde].map(cell).join(";"));
+  });
+
+  // BOM + Semikolon, damit Excel (de-AT) Umlaute und Spalten richtig erkennt
+  const blob = new Blob(["﻿" + lines.join("\r\n")], {type: "text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  a.download = `eventride_events_${iso}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function appEventDetail(ev) {
