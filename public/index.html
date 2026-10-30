@@ -33,7 +33,7 @@
       <li><a href="#events">Events</a></li>
       <li><a href="#features">Die App</a></li>
       <li><a href="#veranstalter">Veranstalter</a></li>
-      <li><a href="/krampuslaeufe-kaernten">Krampusläufe</a></li>
+      <li><a href="/events-kaernten">Eventkalender</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <div class="nav-right">
@@ -46,7 +46,7 @@
     <a href="#events">Events</a>
     <a href="#features">Die App</a>
     <a href="#veranstalter">Für Veranstalter</a>
-    <a href="/krampuslaeufe-kaernten">Krampusläufe in Kärnten</a>
+    <a href="/events-kaernten">Eventkalender Kärnten</a>
     <a href="#faq">FAQ</a>
     <a href="https://instagram.com/event.ride" target="_blank" rel="noopener">Instagram @event.ride</a>
     <a class="mm-cta" href="#download">App holen</a>
@@ -94,13 +94,23 @@
           <h2 class="sec-title">Was geht in Kärnten?</h2>
           <p class="sec-sub">Die nächsten Events, zu denen du mitfahren kannst – live aus der App.</p>
         </div>
-        <a class="sec-aside" href="#download">Alle Events in der App<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+        <a class="sec-aside" href="/events-kaernten">Alle Events ansehen<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
       </div>
       <div class="ev-scroll" id="ev-scroll">
         <div class="ev-skel"></div><div class="ev-skel"></div><div class="ev-skel"></div>
       </div>
       <p class="ev-foot" id="ev-note">Kirchtage · Feuerwehrfeste · Bälle · Krampusläufe · Partys – alle Termine und Fahrten findest du in der App.</p>
-      <a class="btn-s ev-krampus" href="/krampuslaeufe-kaernten">Alle Krampusläufe in Kärnten<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
+      <nav class="ev-cats" aria-label="Events nach Kategorie">
+        <a href="/events-kaernten">Alle Events</a>
+        <a href="/wochenende-kaernten">Dieses Wochenende</a>
+        <a href="/kirchtage-kaernten">Kirchtage &amp; Feste</a>
+        <a href="/partys-kaernten">Disco &amp; Party</a>
+        <a href="/baelle-kaernten">Bälle</a>
+        <a href="/krampuslaeufe-kaernten">Krampus &amp; Perchten</a>
+        <a href="/feuerwehrfeste-kaernten">Feuerwehrfeste</a>
+        <a href="/festivals-kaernten">Festivals &amp; Open Air</a>
+        <a href="/sommerfeste-kaernten">Beach &amp; Sommer</a>
+      </nav>
     </div>
   </section>
 
@@ -336,7 +346,7 @@
   }
 
   // live events from Firestore
-  var TYP = { e1: ['Kirchtag', 'typ-e1'], e2: ['Feuerwehrfest', 'typ-e2'], e3: ['Party', 'typ-e3'], e4: ['Ball', 'typ-e4'], e5: ['Krampuslauf', 'typ-e5'] };
+  var TYP = { e1: ['Kirchtag', 'typ-e1'], e2: ['Feuerwehrfest', 'typ-e2'], e3: ['Party', 'typ-e3'], e4: ['Ball', 'typ-e4'], e5: ['Krampuslauf', 'typ-e5'], e6: ['Festival', 'typ-e3'], e7: ['Sommer', 'typ-e1'] };
   var MON = ['Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
   var evScroll = document.getElementById('ev-scroll');
   var evNote = document.getElementById('ev-note');

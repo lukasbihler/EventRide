@@ -319,8 +319,15 @@
 .typ-e4 { background: rgba(244,143,177,.13); color: #F48FB1; }
 .typ-e5 { background: rgba(179,157,219,.15); color: #B39DDB; }
 .ev-foot { margin-top: 14px; color: var(--faint); font-size: .87rem; }
-.ev-krampus { margin-top: 18px; }
-.ev-krampus svg { width: 16px; height: 16px; }
+.ev-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.ev-cats a {
+  display: inline-flex; align-items: center; padding: 8px 15px; border-radius: 20px;
+  background: rgba(255,255,255,.05); border: 1px solid var(--border-2);
+  color: var(--text); font-size: .85rem; font-weight: 600; text-decoration: none;
+  transition: border-color .2s, background .2s;
+}
+.ev-cats a:hover { border-color: rgba(255,154,60,.55); background: rgba(255,154,60,.08); }
+.ev-cats a:first-child { background: var(--orange); border-color: var(--orange); color: var(--ink); }
 .ev-skel {
   height: 196px; border-radius: 22px;
   background: linear-gradient(100deg, rgba(255,255,255,.05) 35%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.05) 65%);

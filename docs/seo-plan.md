@@ -205,3 +205,20 @@ Name, Datum, Uhrzeit, Gemeinde, Bezirk, **Adresse (Veranstaltungsort)**, Kategor
 - Bildrechte der OG-Bilder prüfen: `krampus.jpg` ist ein Instagram-Screenshot, das Feuerwehrfoto zeigt ein Kennzeichen.
 - DNS-Umstellung, danach Workflow auf Firebase Hosting umstellen, CLAUDE.md anpassen, Sitemap in der Search Console einreichen, SPF-Test.
 - **Merge-Reihenfolge:** `main` erst nach der DNS-Umstellung mergen. Sonst deployt der FTP-Workflow die neue `index.html` mit Links auf `/krampuslaeufe-kaernten`, und die liefern bei World4You 404.
+
+## Erweiterung Schritt 1b (30.10.2026): alle Kategorien, App-Optik
+
+Auf Wunsch vor der DNS-Umstellung ergänzt (zieht Teile von Schritt 2 vor):
+
+- **Übersichtsseiten** (`functions/src/seo/hubs.ts`, eine Vorlage `renderHubPage`):
+  - `/events-kaernten` (alle), `/wochenende-kaernten` (Fr–So, nach Tag gruppiert)
+  - Kategorien = App-Typen: `/kirchtage-kaernten` (e1), `/feuerwehrfeste-kaernten` (e2), `/partys-kaernten` (e3), `/baelle-kaernten` (e4), `/krampuslaeufe-kaernten` (e5), `/festivals-kaernten` (e6), `/sommerfeste-kaernten` (e7)
+  - Themen über den Eventnamen: `/halloween-kaernten`, `/silvester-kaernten`, `/fasching-kaernten`, `/maturabaelle-kaernten`, `/zeltfeste-kaernten`, `/oktoberfeste-kaernten`
+  - Bezirke: `/events-klagenfurt`, `-klagenfurt-land`, `-villach`, `-villach-land`, `-spittal`, `-st-veit`, `-wolfsberg`, `-voelkermarkt`, `-feldkirchen`, `-hermagor`
+  - Jede Seite zeigt kommende Termine und „Bisherige Termine“ aus `event_pages` (bis 400 Tage zurück). Ohne beides: `noindex`, nicht in Sitemap, Chips und Footer.
+- **Optik wie die App:** Verlauf + 40 % Schwarz (detail_page), Eventkarten mit Kategoriebild und Abdunklung (eventcard_widget), Infokarte mit Material-Icons, „Zum Event navigieren“ (Google-Maps-Suche nach Adresse + Gemeinde), Buttons „Fahrten finden“ / „Fahrt anbieten“ (mit JS direkt in den passenden Store). Navigation, Store-Buttons und CTA wie die Website.
+- **Bilder:** App-Kategoriebilder aus `assets/image/` (Lizenz laut Nutzer ok) als `public/assets/og/{kirchtag,feuerwehr,disco,ball,krampus,festival,beach}.jpg` (1200×630) und `-640.jpg` (Karten, mobiler Hero). Krampus-Bild so zugeschnitten, dass die „1/2“-Einblendung wegfällt.
+- **Startseite:** Chip-Leiste aller Kategorien statt des Krampus-Buttons, Nav-Link „Eventkalender“ → `/events-kaernten`.
+- **Hosting:** Rewrite per Regex `^/(events-[a-z-]+|[a-z-]+-kaernten)/?$` → `seo`.
+- **Performance:** HTML wird in der Function mit Brotli/Gzip gepackt (52 KB → 7 KB), Hero mobil immer 640 px (`<picture>`), Logo 64 px, `content-visibility` für Kartengruppen.
+- **Abnahme Vorschau:** Lighthouse Mobile Event-Seite 94/100/100, `/events-kaernten` 94/100/100, `/krampuslaeufe-kaernten` 98/100/100 (SEO 69 nur wegen Vorschau-noindex). Leak-Test 81 URLs gegen 47 private Werte: nur der bekannte, öffentlich beschriebene Ticket-Link.

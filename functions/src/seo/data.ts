@@ -214,6 +214,17 @@ export async function listEventPages(): Promise<EventPageDoc[]> {
   return snap.docs.map((d) => d.data() as EventPageDoc);
 }
 
+let pagesCache: { at: number; pages: EventPageDoc[] } | null = null;
+
+// Wie listEventPages(), aber mit 5-Minuten-Memo — für die Übersichtsseiten,
+// die bei jedem Aufruf die bisherigen Termine aus dem Archiv brauchen.
+export async function loadEventPages(): Promise<EventPageDoc[]> {
+  if (pagesCache && Date.now() - pagesCache.at < CACHE_MS) return pagesCache.pages;
+  const pages = (await listEventPages()).filter((p) => p.slug && p.snapshot);
+  pagesCache = {at: Date.now(), pages};
+  return pages;
+}
+
 // Ohne verbliebene Events, aber Datum noch nicht vorbei → Event wurde entfernt
 // (abgesagt/verschoben/versteckt), nicht regulär abgelaufen.
 export function isRemovedPage(page: EventPageDoc): boolean {
@@ -224,19 +235,18 @@ export function isRemovedPage(page: EventPageDoc): boolean {
 
 export interface Kategorie {
   label: string;
-  cls: string;
-  img: string;
+  img: string; // Bild-Key unter /assets/og/ (gleiche Motive wie die App-Eventkarten)
 }
 
 const KATEGORIEN: Record<string, Kategorie> = {
-  e0: {label: "Event", cls: "typ-e1", img: "kirchtag"},
-  e1: {label: "Kirchtag & Fest", cls: "typ-e1", img: "kirchtag"},
-  e2: {label: "Feuerwehrfest", cls: "typ-e2", img: "feuerwehr"},
-  e3: {label: "Party", cls: "typ-e3", img: "party"},
-  e4: {label: "Ball", cls: "typ-e4", img: "ball"},
-  e5: {label: "Krampuslauf", cls: "typ-e5", img: "krampus"},
-  e6: {label: "Festival & Open-Air", cls: "typ-e3", img: "party"},
-  e7: {label: "Sommerfest", cls: "typ-e1", img: "kirchtag"},
+  e0: {label: "Event", img: "kirchtag"},
+  e1: {label: "Kirchtag & Fest", img: "kirchtag"},
+  e2: {label: "Feuerwehrfest", img: "feuerwehr"},
+  e3: {label: "Disco & Party", img: "disco"},
+  e4: {label: "Ball", img: "ball"},
+  e5: {label: "Krampus & Perchten", img: "krampus"},
+  e6: {label: "Festival & Open Air", img: "festival"},
+  e7: {label: "Beach & Sommer", img: "beach"},
 };
 
 export function kategorie(typ: string): Kategorie {
