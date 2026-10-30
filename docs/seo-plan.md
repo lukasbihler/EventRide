@@ -179,3 +179,29 @@ Name, Datum, Uhrzeit, Gemeinde, Bezirk, **Adresse (Veranstaltungsort)**, Kategor
 - Lighthouse Mobile ≥ 90 (Event-Seite + Übersicht).
 - Nach der DNS-Umstellung: `Resolve-DnsName` (A, MX), HTTPS ok, `/datenschutz.html` 200, Passwort-Reset-Link funktioniert, `X-Robots-Tag` am Manager gesetzt.
 - Testmail von `@eventride.at` an Gmail senden und im Original-Header **SPF = PASS** prüfen (dazu auch eine Mail über `_spf.firebasemail.com`, z. B. Passwort-Reset).
+
+---
+
+## Stand Schritt 1 (30.10.2026), bereit für die DNS-Umstellung
+
+**Deployt (Produktion, unsichtbar bis zur DNS-Umstellung):** Functions `seo`, `onEventWrittenSeo` und `seoSlugBackfill` (Node 22, us-central1). Der Backfill ist gelaufen: 57 Events geprüft, 49 Event-Seiten in `event_pages`.
+**Vorschau:** https://eventride-cd0e9--seo-preview-eukxkzyl.web.app (bis 6.11.)
+
+**Abnahme auf der Vorschau**
+- Der Event-Text steht im Quelltext (H1, Fakten, Beschreibung, JSON-LD), es ist kein JS nötig.
+- Leak-Test über alle 51 URLs gegen 45 echte private Werte (`mgrSrcQuelleLink`/`mgrSrcIgAccount`): 0 Lecks. Der einzige Treffer war ein Ticket-Link, der ohnehin in der öffentlichen Beschreibung steht.
+- JSON-LD auf allen Seiten gültig. Den Rich Results Test von Google noch manuell durchführen.
+- Lighthouse Mobile: Performance 100, Barrierefreiheit 100, Best Practices 100. SEO 69 nur wegen `X-Robots-Tag: noindex`, das Firebase auf Vorschaukanälen erzwingt.
+- Sitemap 200, `robots.txt` 200, unbekannter Slug liefert 404, Großschreibung und abschließender Slash liefern 301.
+
+**Abweichungen vom Plan**
+- `firestore.rules` wurde nicht deployt. `event_pages` ist ohne Catch-all-Regel ohnehin für Clients gesperrt, die Regel geht mit dem nächsten regulären Rules-Deploy mit.
+- CSS wird inline ausgeliefert (`functions/src/seo/styles.ts`) statt über `public/seo.css`, wegen des LCP.
+- Node 20 wurde am 30.10.2026 abgeschaltet, deshalb wurde `functions/package.json` auf Node 22 umgestellt. **Die übrigen Functions laufen noch auf Node 20 und lassen sich erst nach einem Deploy auf Node 22 wieder ändern.**
+- FTP-Inventur: Auf dem Server liegen nur Hoster-Dateien (`error/`, `stats/`), keine `.htaccess`, kein `.well-known/`. `index.html` und `style.css` auf dem Server sind identisch mit `main`.
+
+**Offen**
+- `IOS_PROVIDER_TOKEN` in `functions/src/seo/render.ts` (TODO)
+- Bildrechte der OG-Bilder prüfen: `krampus.jpg` ist ein Instagram-Screenshot, das Feuerwehrfoto zeigt ein Kennzeichen.
+- DNS-Umstellung, danach Workflow auf Firebase Hosting umstellen, CLAUDE.md anpassen, Sitemap in der Search Console einreichen, SPF-Test.
+- **Merge-Reihenfolge:** `main` erst nach der DNS-Umstellung mergen. Sonst deployt der FTP-Workflow die neue `index.html` mit Links auf `/krampuslaeufe-kaernten`, und die liefern bei World4You 404.
