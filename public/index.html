@@ -9,8 +9,9 @@
   <meta name="google-site-verification" content="mLKBs35_DZY-mc9IvuQjKdmX__VyPKoCqTwH-leAMGI">
   <meta property="og:title" content="EventRide – Kein Auto? Kein Problem.">
   <meta property="og:description" content="Mitfahrgelegenheiten zu Events in ganz Kärnten. Kostenlos für iOS und Android.">
-  <meta property="og:image" content="og-image.png">
-  <meta property="og:url" content="https://eventride.at">
+  <meta property="og:image" content="https://www.eventride.at/assets/og/kirchtag.jpg">
+  <meta property="og:url" content="https://www.eventride.at/">
+  <link rel="canonical" href="https://www.eventride.at/">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
@@ -32,6 +33,7 @@
       <li><a href="#events">Events</a></li>
       <li><a href="#features">Die App</a></li>
       <li><a href="#veranstalter">Veranstalter</a></li>
+      <li><a href="/krampuslaeufe-kaernten">Krampusläufe</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
     <div class="nav-right">
@@ -44,6 +46,7 @@
     <a href="#events">Events</a>
     <a href="#features">Die App</a>
     <a href="#veranstalter">Für Veranstalter</a>
+    <a href="/krampuslaeufe-kaernten">Krampusläufe in Kärnten</a>
     <a href="#faq">FAQ</a>
     <a href="https://instagram.com/event.ride" target="_blank" rel="noopener">Instagram @event.ride</a>
     <a class="mm-cta" href="#download">App holen</a>
@@ -97,6 +100,7 @@
         <div class="ev-skel"></div><div class="ev-skel"></div><div class="ev-skel"></div>
       </div>
       <p class="ev-foot" id="ev-note">Kirchtage · Feuerwehrfeste · Bälle · Krampusläufe · Partys – alle Termine und Fahrten findest du in der App.</p>
+      <a class="btn-s ev-krampus" href="/krampuslaeufe-kaernten">Alle Krampusläufe in Kärnten<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
     </div>
   </section>
 
@@ -351,7 +355,7 @@
     var docs = (data.documents || []).map(function (d) {
       var f = d.fields || {};
       function get(k) { return (f[k] && (f[k].stringValue || f[k].integerValue)) || ''; }
-      return { name: get('name'), datum: get('datum'), ort: get('standort') || get('gemeinde'), bezirk: get('bezirk'), typ: get('typ') };
+      return { name: get('name'), datum: get('datum'), ort: get('standort') || get('gemeinde'), bezirk: get('bezirk'), typ: get('typ'), slug: get('slug') };
     });
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var upcoming = docs.map(function (e) { e._d = parseDatum(e.datum); return e; })
@@ -363,7 +367,8 @@
     evScroll.innerHTML = upcoming.map(function (e) {
       var t = TYP[e.typ] || TYP.e1;
       var loc = e.ort + (e.bezirk ? ' · ' + e.bezirk : '');
-      return '<a class="ev-card spot" href="#download">' +
+      var href = /^[a-z0-9-]+$/.test(e.slug) ? '/event/' + e.slug : '#download';
+      return '<a class="ev-card spot" href="' + href + '">' +
         '<div class="ev-top"><div class="ev-cal"><strong>' + e._d.getDate() + '</strong><span>' + MON[e._d.getMonth()] + '</span></div>' +
         '<span class="ev-typ ' + t[1] + '">' + t[0] + '</span></div>' +
         '<div class="ev-name">' + esc(e.name) + '</div>' +

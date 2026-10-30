@@ -319,6 +319,8 @@
 .typ-e4 { background: rgba(244,143,177,.13); color: #F48FB1; }
 .typ-e5 { background: rgba(179,157,219,.15); color: #B39DDB; }
 .ev-foot { margin-top: 14px; color: var(--faint); font-size: .87rem; }
+.ev-krampus { margin-top: 18px; }
+.ev-krampus svg { width: 16px; height: 16px; }
 .ev-skel {
   height: 196px; border-radius: 22px;
   background: linear-gradient(100deg, rgba(255,255,255,.05) 35%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.05) 65%);

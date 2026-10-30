@@ -18,6 +18,17 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "/event/**", "function": { "functionId": "seo", "region": "us-central1" } },
+      { "source": "/krampuslaeufe-kaernten{,/}", "function": { "functionId": "seo", "region": "us-central1" } },
+      { "source": "/sitemap.xml", "function": { "functionId": "seo", "region": "us-central1" } }
+    ],
+    "headers": [
+      { "source": "/eventride_manager.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+      { "source": "/auth/**", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+      { "source": "/assets/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
+      { "source": "/seo.css", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }] }
     ]
   },
   "flutter": {

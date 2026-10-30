@@ -1,0 +1,65 @@
+# TEMPORÄR (SEO-Umzug, docs/seo-plan.md): Vergleicht die Dateien auf dem
+# World4You-FTP mit public/, damit vor der DNS-Umstellung auf Firebase Hosting
+# nichts verloren geht (.htaccess, .well-known/, Verifizierungsdateien).
+# Nur lesend. Nach dem Abgleich wieder löschen.
+name: FTP-Inventur (temporär)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/seo-event-pages]
+    paths:
+      - ".github/workflows/ftp-inventory.yml"
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: lftp installieren
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Server spiegeln (nur lesen)
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          LFTP_PASSWORD: ${{ secrets.FTP_PASS }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+        run: |
+          lftp -c "set ftp:ssl-allow true; set ssl:verify-certificate no; set ftp:list-options -a; \
+            open --env-password -u \"$FTP_USER\" \"$FTP_HOST\"; \
+            mirror --no-perms --exclude-glob .ftp-deploy-sync-state.json \"$FTP_PATH\" server"
+
+      - name: Mit public/ vergleichen
+        run: |
+          (cd server && find . -type f | sort) > server.txt
+          (cd public && find . -type f | sort) > public.txt
+          comm -23 server.txt public.txt > nur-server.txt
+          comm -13 server.txt public.txt > nur-repo.txt
+          comm -12 server.txt public.txt | while read -r f; do
+            cmp -s "server/$f" "public/$f" || echo "$f"
+          done > unterschiedlich.txt
+
+          mkdir -p out/nur-server
+          while read -r f; do
+            mkdir -p "out/nur-server/$(dirname "$f")"
+            cp "server/$f" "out/nur-server/$f"
+          done < nur-server.txt
+          cp server.txt public.txt nur-server.txt nur-repo.txt unterschiedlich.txt out/
+
+          {
+            echo "## Nur auf dem Server ($(wc -l < nur-server.txt))"
+            echo '```'; cat nur-server.txt; echo '```'
+            echo "## Inhalt unterschiedlich ($(wc -l < unterschiedlich.txt))"
+            echo '```'; cat unterschiedlich.txt; echo '```'
+            echo "## Nur im Repo ($(wc -l < nur-repo.txt))"
+            echo '```'; cat nur-repo.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ftp-inventur
+          path: out/
+          retention-days: 3
