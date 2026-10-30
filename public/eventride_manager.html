@@ -2773,7 +2773,7 @@ function submitFlyerUpload() {
     const _flyerParts = [];
     if (eintrittText) {
       const _eLines = eintrittText.split('\n').map(l => l.trim()).filter(Boolean);
-      _flyerParts.push('Eintritt:\n' + _eLines.map(l => /€/.test(l) ? l : l + ' €').join('\n'));
+      _flyerParts.push('Eintritt:\n' + _eLines.join('\n'));
     }
     _flyerParts.push('Einlass ab ' + uhr + ' Uhr');
     if (beschreibungText) _flyerParts.push(beschreibungText);
@@ -2813,7 +2813,7 @@ function submitFlyerUpload() {
   const _flyerParts = [];
   if (eintrittText) {
     const _eLines = eintrittText.split('\n').map(l => l.trim()).filter(Boolean);
-    _flyerParts.push('Eintritt:\n' + _eLines.map(l => /€/.test(l) ? l : l + ' €').join('\n'));
+    _flyerParts.push('Eintritt:\n' + _eLines.join('\n'));
   }
   _flyerParts.push('Einlass ab ' + uhr + ' Uhr');
   if (beschreibungText) _flyerParts.push(beschreibungText);
@@ -3349,7 +3349,7 @@ function submitUpload() {
     const _parts = [];
     if (eintrittText) {
       const _eLines = eintrittText.split('\n').map(l => l.trim()).filter(Boolean);
-      _parts.push('Eintritt:\n' + _eLines.map(l => /€/.test(l) ? l : l + ' €').join('\n'));
+      _parts.push('Eintritt:\n' + _eLines.join('\n'));
     }
     _parts.push('Einlass ab ' + uhr + ' Uhr');
     if (beschreibungText) _parts.push(beschreibungText);
@@ -3382,7 +3382,7 @@ function submitUpload() {
   const _uploadParts = [];
   if (eintrittText) {
     const _eLines = eintrittText.split('\n').map(l => l.trim()).filter(Boolean);
-    _uploadParts.push('Eintritt:\n' + _eLines.map(l => /€/.test(l) ? l : l + ' €').join('\n'));
+    _uploadParts.push('Eintritt:\n' + _eLines.join('\n'));
   }
   _uploadParts.push('Einlass ab ' + uhr + ' Uhr');
   if (beschreibungText) _uploadParts.push(beschreibungText);
