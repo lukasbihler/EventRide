@@ -1468,5 +1468,5 @@ export const deleteEventContainer = onCall(async (request) => {
 // SEO: öffentliche Event-Seiten (eventride.at/event/…), siehe docs/seo-plan.md
 // ──────────────────────────────────────────────────────────────────────────────
 
-export {seo} from "./seo/ssr";
+export {seo, seoNext} from "./seo/ssr";
 export {onEventWrittenSeo, seoSlugBackfill} from "./seo/slugTrigger";

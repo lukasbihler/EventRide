@@ -13,11 +13,12 @@
   <meta property="og:url" content="https://www.eventride.at/">
   <link rel="canonical" href="https://www.eventride.at/">
   <meta property="og:type" content="website">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon-192.png">
+  <link rel="apple-touch-icon" href="favicon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap"></noscript>
   <link rel="stylesheet" href="style.css">
 </head>
 <body style="margin:0;background:#081221">
@@ -28,7 +29,7 @@
 
   <!-- NAVBAR -->
   <nav class="nav" id="nav">
-    <a class="nav-logo" href="#top"><img src="assets/logo-256.png" alt="EventRide Logo"><span>Event<span class="r">Ride</span></span></a>
+    <a class="nav-logo" href="#top"><img src="assets/logo-64.png" alt="EventRide Logo" width="32" height="32"><span>Event<span class="r">Ride</span></span></a>
     <ul class="nav-links">
       <li><a href="#events">Events</a></li>
       <li><a href="#features">Die App</a></li>
@@ -73,7 +74,7 @@
         <div class="glow"></div>
         <div class="phone phone-l"><img src="assets/screenshots/real-fahrten-web.jpg" alt="Fahrten finden in der EventRide App"></div>
         <div class="phone phone-r"><img src="assets/screenshots/real-chat-web.jpg" alt="Chat in der EventRide App"></div>
-        <div class="phone phone-c"><img src="assets/screenshots/real-events-web.jpg" alt="Events entdecken in der EventRide App"></div>
+        <div class="phone phone-c"><img src="assets/screenshots/real-events-web-504.jpg" srcset="assets/screenshots/real-events-web-504.jpg 504w, assets/screenshots/real-events-web.jpg 750w" sizes="252px" alt="Events entdecken in der EventRide App" width="504" height="1091" fetchpriority="high"></div>
       </div>
     </div>
   </section>
@@ -92,25 +93,13 @@
         <div>
           <p class="eyebrow">Live aus der App</p>
           <h2 class="sec-title">Was geht in Kärnten?</h2>
-          <p class="sec-sub">Die nächsten Events, zu denen du mitfahren kannst – live aus der App.</p>
+          <p class="sec-sub">Die nächsten Events, zu denen du mitfahren kannst – direkt aus der App.</p>
         </div>
         <a class="sec-aside" href="/events-kaernten">Alle Events ansehen<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg></a>
       </div>
-      <div class="ev-scroll" id="ev-scroll">
-        <div class="ev-skel"></div><div class="ev-skel"></div><div class="ev-skel"></div>
-      </div>
-      <p class="ev-foot" id="ev-note">Kirchtage · Feuerwehrfeste · Bälle · Krampusläufe · Partys – alle Termine und Fahrten findest du in der App.</p>
-      <nav class="ev-cats" aria-label="Events nach Kategorie">
-        <a href="/events-kaernten">Alle Events</a>
-        <a href="/wochenende-kaernten">Dieses Wochenende</a>
-        <a href="/kirchtage-kaernten">Kirchtage &amp; Feste</a>
-        <a href="/partys-kaernten">Disco &amp; Party</a>
-        <a href="/baelle-kaernten">Bälle</a>
-        <a href="/krampuslaeufe-kaernten">Krampus &amp; Perchten</a>
-        <a href="/feuerwehrfeste-kaernten">Feuerwehrfeste</a>
-        <a href="/festivals-kaernten">Festivals &amp; Open Air</a>
-        <a href="/sommerfeste-kaernten">Beach &amp; Sommer</a>
-      </nav>
+      <!--seo:filter-->
+      <div class="ev-list"><!--seo:events--></div>
+      <p class="ev-foot">Kirchtage · Feuerwehrfeste · Bälle · Krampusläufe · Partys – alle Termine und Fahrten findest du in der App.</p>
     </div>
   </section>
 
@@ -226,7 +215,7 @@
   <!-- DOWNLOAD -->
   <section class="block" id="download">
     <div class="dl-card rv">
-      <img class="dl-icon" src="assets/logo-256.png" alt="EventRide App Icon">
+      <img class="dl-icon" src="assets/logo-168.png" alt="EventRide App Icon">
       <div class="sec-head center" style="margin-bottom:0">
         <p class="eyebrow">Download</p>
         <h2 class="sec-title">Hol dir EventRide.</h2>
@@ -244,7 +233,7 @@
   <div class="brand-word" aria-hidden="true">EventRide</div>
   <footer class="footer">
     <div class="footer-inner">
-      <div class="footer-l"><img src="assets/logo-256.png" alt="EventRide"><span class="fw">Event<span class="r">Ride</span></span><small>© 2026 – Made in Kärnten</small></div>
+      <div class="footer-l"><img src="assets/logo-64.png" alt="EventRide" width="25" height="25"><span class="fw">Event<span class="r">Ride</span></span><small>© 2026 – Made in Kärnten</small></div>
       <div class="footer-links">
         <a href="https://instagram.com/event.ride" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"></rect><circle cx="12" cy="12" r="4.4"></circle><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"></circle></svg>@event.ride</a>
         <a href="mailto:kontakt@eventride.at">kontakt@eventride.at</a>
@@ -344,49 +333,6 @@
       if (c) c.style.transform = '';
     }, { passive: true });
   }
-
-  // live events from Firestore
-  var TYP = { e1: ['Kirchtag', 'typ-e1'], e2: ['Feuerwehrfest', 'typ-e2'], e3: ['Party', 'typ-e3'], e4: ['Ball', 'typ-e4'], e5: ['Krampuslauf', 'typ-e5'], e6: ['Festival', 'typ-e3'], e7: ['Sommer', 'typ-e1'] };
-  var MON = ['Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-  var evScroll = document.getElementById('ev-scroll');
-  var evNote = document.getElementById('ev-note');
-  function parseDatum(s) {
-    if (!s) return null;
-    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
-    m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
-    return null;
-  }
-  function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  function fail() { if (evScroll) evScroll.style.display = 'none'; }
-  var url = 'https://firestore.googleapis.com/v1/projects/eventride-cd0e9/databases/(default)/documents/events?pageSize=300&key=AIzaSyBAq6FHDB3s_mWcE7ZSNifhSiOxUWrxQac';
-  fetch(url).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); }).then(function (data) {
-    var docs = (data.documents || []).map(function (d) {
-      var f = d.fields || {};
-      function get(k) { return (f[k] && (f[k].stringValue || f[k].integerValue)) || ''; }
-      return { name: get('name'), datum: get('datum'), ort: get('standort') || get('gemeinde'), bezirk: get('bezirk'), typ: get('typ'), slug: get('slug') };
-    });
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var upcoming = docs.map(function (e) { e._d = parseDatum(e.datum); return e; })
-      .filter(function (e) { return e._d && e._d >= today && e.name; })
-      .sort(function (a, b) { return a._d - b._d; }).slice(0, 3);
-    if (!upcoming.length) { fail(); return; }
-    var pin = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11Z"></path><circle cx="12" cy="10" r="2.6"></circle></svg>';
-    var arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>';
-    evScroll.innerHTML = upcoming.map(function (e) {
-      var t = TYP[e.typ] || TYP.e1;
-      var loc = e.ort + (e.bezirk ? ' · ' + e.bezirk : '');
-      var href = /^[a-z0-9-]+$/.test(e.slug) ? '/event/' + e.slug : '#download';
-      return '<a class="ev-card spot" href="' + href + '">' +
-        '<div class="ev-top"><div class="ev-cal"><strong>' + e._d.getDate() + '</strong><span>' + MON[e._d.getMonth()] + '</span></div>' +
-        '<span class="ev-typ ' + t[1] + '">' + t[0] + '</span></div>' +
-        '<div class="ev-name">' + esc(e.name) + '</div>' +
-        '<div class="ev-loc">' + pin + esc(loc) + '</div>' +
-        '<div class="ev-go"><span>Fahrt finden</span>' + arrow + '</div></a>';
-    }).join('');
-    if (evNote && docs.length > upcoming.length) evNote.textContent = 'Das war nur ein Ausschnitt – alle ' + docs.length + ' Events samt Fahrten findest du in der App.';
-  }).catch(fail);
 })();
 </script>
 

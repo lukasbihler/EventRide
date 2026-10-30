@@ -20,11 +20,14 @@
       "**/node_modules/**"
     ],
     "rewrites": [
+      { "source": "/", "function": { "functionId": "seo", "region": "us-central1" } },
+      { "source": "/index.html", "function": { "functionId": "seo", "region": "us-central1" } },
       { "source": "/event/**", "function": { "functionId": "seo", "region": "us-central1" } },
       { "regex": "^/(events-[a-z-]+|[a-z-]+-kaernten)/?$", "function": { "functionId": "seo", "region": "us-central1" } },
       { "source": "/sitemap.xml", "function": { "functionId": "seo", "region": "us-central1" } }
     ],
     "headers": [
+      { "source": "/home.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] },
       { "source": "/eventride_manager.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
       { "source": "/auth/**", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
       { "source": "/assets/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] }

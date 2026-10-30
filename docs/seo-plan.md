@@ -222,3 +222,19 @@ Auf Wunsch vor der DNS-Umstellung ergänzt (zieht Teile von Schritt 2 vor):
 - **Hosting:** Rewrite per Regex `^/(events-[a-z-]+|[a-z-]+-kaernten)/?$` → `seo`.
 - **Performance:** HTML wird in der Function mit Brotli/Gzip gepackt (52 KB → 7 KB), Kopfbild mobil immer 640 px (`<picture>`), Logo 64 px.
 - **Abnahme Vorschau:** Lighthouse Mobile Event-Seite, `/events-kaernten`, `/krampuslaeufe-kaernten` je 100/100/100 (SEO 69 nur wegen Vorschau-noindex). Leak-Test 81 URLs gegen 47 private Werte: nur der bekannte, öffentlich beschriebene Ticket-Link.
+
+## Schritt 2b (30.10.2026): Design näher an der App + Korrekturen
+
+Umgesetzt laut Auftrag 2b, nur auf dem Vorschaukanal:
+
+- **Ablauf Vorschau:** `bash scripts/deploy_seo_preview.sh` deployt nur die Function `seoNext` (gleicher Code wie `seo`) und den Kanal `seo-preview` mit einer temporären `firebase.preview.json`, deren Rewrites auf `seoNext` zeigen. Die Live-Function `seo` bleibt unverändert.
+- **Livegang nach OK:** `npx firebase-tools deploy --only functions:seo,functions:onEventWrittenSeo,functions:seoSlugBackfill,hosting` (Trigger/Backfill wegen neuem Snapshot-Feld `ort`; danach schreibt der Backfill alle `event_pages` einmal neu).
+- **Eventkarten** wie `eventcard_widget.dart`: Bild sichtbar, Verlauf nur links, Titel/Datum („Sa. 31.10. · 21:00“)/Gemeinde, feste Höhe, 1 bzw. 2 Spalten. Badge nur auf gemischten Listen (Alle, Bezirk, Wochenende, Startseite, verwandte Events außer Kategorie).
+- **Filter-Pills** „Alle“, „Typ ▾“, „Datum ▾“ (Wochenende + Themen), „Bezirk ▾“ als `<details>`, Links mit `#events`, nur Seiten mit Inhalt.
+- **Übersichtsseiten:** H1, ein Satz, Filter, Liste; Einleitung als „Über …“ unter der Liste.
+- **Event-Seite** wie die Infos-Seite: eine Glas-Karte (Titel, Datum+Uhrzeit, Adresse, „Zum Event navigieren“, „{n} wollen hin“ aus `interessentenCount`, Fahrten ab 1, Beschreibung, Eintritt, Veranstalter). App-Buttons „Fahrten finden“/„Fahrt anbieten“ (am Handy fix unten, per JS direkt in den Store), kleine Store-Badges.
+- **Hintergrund:** App-Verlauf mit 45 % Schwarz; html-Hintergrund = hellste Stelle (#655542), Weiß darauf 6,6:1, auf Glas 5,3:1.
+- **Startseite serverseitig:** `public/index.html` → `public/home.html` (Vorlage mit `<!--seo:filter-->`/`<!--seo:events-->`), Rewrite `/` → Function. Die Function holt `home.html` + `style.css` über das Hosting derselben Domain (Allowlist), setzt 6 Events + Filter ein und liefert das CSS inline. `/home.html` hat `X-Robots-Tag: noindex`. Das Client-Skript für Live-Events ist entfernt. **CLAUDE.md nach dem Merge anpassen (index.html → home.html).**
+- **Startseite Performance:** Fonts nicht blockierend, Hero-Text/-Handys ohne opacity-Animation (LCP), Screenshot 504 px + fetchpriority, `topo.png` (1,5 MB) → `topo.jpg` (37 KB), `favicon-192.png` statt 916-KB-Favicon, kleine Logos.
+- **Strukturdaten:** kein `endDate` bei eintägigen Events (mehrtägig: letzter Tag), Adresse in `streetAddress`/`postalCode`/`addressLocality`, `location.name` = Veranstaltungsort (`standort`), sonst Gemeinde.
+- **Abnahme Vorschau (Lighthouse Mobile):** Event-Seite, `/events-kaernten`, `/partys-kaernten`, `/wochenende-kaernten` 93–100 / 100 / 100. Startseite 100/100/100 bei warmem CDN-Cache, 77–81 Performance bei Cache-MISS (Function holt Vorlage); alte Startseite: 64. SEO 69 überall nur wegen Vorschau-noindex. Leak-Test 85 URLs: nur der bekannte Ticket-Link.

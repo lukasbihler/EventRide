@@ -1,7 +1,11 @@
 // SSR für die öffentlichen SEO-Seiten, erreichbar über Firebase-Hosting-Rewrites
-// (firebase.json): /event/{slug}, Übersichtsseiten (/kirchtage-kaernten,
-// /events-villach, …) und /sitemap.xml. Das Hosting-CDN cacht die Antworten
-// (s-maxage), die Function läuft also nur selten.
+// (firebase.json): Startseite (/), /event/{slug}, Übersichtsseiten
+// (/kirchtage-kaernten, /events-villach, …) und /sitemap.xml. Das Hosting-CDN
+// cacht die Antworten (s-maxage), die Function läuft also nur selten.
+//
+// Zwei Exporte mit demselben Code: `seo` (live) und `seoNext` (Vorschaukanal).
+// Neue Versionen gehen zuerst nur als seoNext raus (firebase.preview.json),
+// `seo` wird erst nach Freigabe deployt.
 
 import {onRequest} from "firebase-functions/v2/https";
 import type {Request, Response} from "express";
@@ -14,7 +18,8 @@ import {
   ALL_HUBS, BEZIRK_HUBS, Hub, THEMEN_HUBS, hubByPath, hubForBezirk, hubForTyp, wochenende,
 } from "./hubs";
 import {
-  CardEvent, RelatedSection, renderEventPage, renderHubPage, renderNotFound, renderSitemap,
+  CardEvent, FilterCtx, RelatedSection, renderEventPage, renderHomeParts, renderHubPage,
+  renderNotFound, renderSitemap,
 } from "./render";
 import {isValidSlug} from "./slug";
 
@@ -22,6 +27,7 @@ const CACHE_PAGE = "public, max-age=300, s-maxage=600";
 const CACHE_404 = "public, max-age=60, s-maxage=120";
 const CACHE_SITEMAP = "public, max-age=1800, s-maxage=3600";
 
+const HOME_EVENTS = 6;
 const MAX_PAST = 8;
 const PAST_DAYS = 400; // "Bisherige Termine": gut ein Jahr zurück (Serien kommen jährlich wieder)
 
@@ -165,14 +171,66 @@ async function hubPage(res: Response, hub: Hub): Promise<void> {
   const site = await loadSite();
   const s = site.stats.get(hub.path) as HubStats;
   sendHtml(res, 200, renderHubPage({
+    ...filterCtx(site),
     hub,
     upcoming: s.upcoming,
     past: s.past,
-    hubs: site.aktiv,
-    themen: THEMEN_HUBS.filter((h) => site.aktiv.has(h.path)),
-    bezirke: BEZIRK_HUBS.filter((h) => site.aktiv.has(h.path)),
     wochenende: hub.kind === "wochenende" ? wochenende(site.heute) : undefined,
   }, site.heute), CACHE_PAGE);
+}
+
+function filterCtx(site: Site): FilterCtx {
+  return {
+    aktiv: site.aktiv,
+    themen: THEMEN_HUBS.filter((h) => site.aktiv.has(h.path)),
+    bezirke: BEZIRK_HUBS.filter((h) => site.aktiv.has(h.path)),
+  };
+}
+
+// ── Startseite ───────────────────────────────────────────────────────────────
+// public/home.html ist die statische Startseite mit Markern; die Function holt
+// sie über das Hosting derselben Domain (Vorschau oder live) und setzt die
+// Events serverseitig ein. So bleibt die Startseite per Hosting-Deploy pflegbar.
+
+const HOME_HOSTS = /^((www\.)?eventride\.at|eventride-cd0e9(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com))$/;
+const homeCache = new Map<string, { at: number; html: string }>();
+
+function homeOrigin(req: Request): string {
+  const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "").split(",")[0].trim().toLowerCase();
+  if (HOME_HOSTS.test(host)) return `https://${host}`;
+  // Lokaler Testserver (scratchpad/devserver.js)
+  if (process.env.SEO_DEV === "1" && /^localhost:\d+$/.test(host)) return `http://${host}`;
+  return "https://www.eventride.at";
+}
+
+async function homeTemplate(origin: string): Promise<string> {
+  const hit = homeCache.get(origin);
+  if (hit && Date.now() - hit.at < 5 * 60 * 1000) return hit.html;
+  const [r, rc] = await Promise.all([
+    fetch(`${origin}/home.html`, {redirect: "error"}),
+    fetch(`${origin}/style.css`, {redirect: "error"}),
+  ]);
+  if (!r.ok) throw new Error(`home.html: HTTP ${r.status}`);
+  let html = await r.text();
+  if (!html.includes("<!--seo:events-->")) throw new Error("home.html: Marker fehlt");
+  // style.css inline: spart am Handy einen Roundtrip vor dem ersten Rendern.
+  // Ohne CSS bleibt der <link> stehen (Seite funktioniert trotzdem).
+  const css = rc.ok ? await rc.text() : "";
+  if (css && !css.includes("</style")) {
+    html = html.replace("<link rel=\"stylesheet\" href=\"style.css\">", () => `<style>${css}</style>`);
+  }
+  homeCache.set(origin, {at: Date.now(), html});
+  return html;
+}
+
+async function homePage(req: Request, res: Response): Promise<void> {
+  const [site, template] = await Promise.all([loadSite(), homeTemplate(homeOrigin(req))]);
+  const upcoming = site.all.filter((e) => e.slug && !isPast(e.endDay)).slice(0, HOME_EVENTS);
+  const teile = renderHomeParts(upcoming, filterCtx(site));
+  const html = template
+    .replace("<!--seo:filter-->", teile.filter)
+    .replace("<!--seo:events-->", teile.events);
+  sendHtml(res, 200, html, CACHE_PAGE);
 }
 
 async function sitemap(res: Response): Promise<void> {
@@ -194,7 +252,7 @@ async function sitemap(res: Response): Promise<void> {
   send(res, 200, renderSitemap(urls), "application/xml; charset=utf-8", CACHE_SITEMAP);
 }
 
-export const seo = onRequest({memory: "512MiB", maxInstances: 10}, async (req, res) => {
+async function handle(req: Request, res: Response): Promise<void> {
   if (req.method !== "GET" && req.method !== "HEAD") {
     res.status(405).set("Allow", "GET, HEAD").send("");
     return;
@@ -202,6 +260,14 @@ export const seo = onRequest({memory: "512MiB", maxInstances: 10}, async (req, r
 
   const path = req.path;
   try {
+    if (path === "/" || path === "/index.html") {
+      if (path !== "/") {
+        res.redirect(301, "/");
+        return;
+      }
+      await homePage(req, res);
+      return;
+    }
     if (path === "/sitemap.xml") {
       await sitemap(res);
       return;
@@ -244,4 +310,8 @@ export const seo = onRequest({memory: "512MiB", maxInstances: 10}, async (req, r
     console.error(`[seo] ${path}`, e);
     res.status(500).set("Cache-Control", "no-store").send("Interner Fehler");
   }
-});
+}
+
+const OPTS = {memory: "512MiB" as const, maxInstances: 10};
+export const seo = onRequest(OPTS, handle);
+export const seoNext = onRequest(OPTS, handle);

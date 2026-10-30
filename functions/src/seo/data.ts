@@ -19,6 +19,7 @@ export interface PublicEvent {
   endDay: string;   // == startDay bei eintägigen Events
   uhrzeit: string | null; // "HH:MM"
   gemeinde: string;
+  ort: string;      // Veranstaltungsort (standort), leer wenn gleich der Gemeinde
   bezirk: string;
   adresse: string;
   typ: string;
@@ -29,7 +30,7 @@ export interface PublicEvent {
 
 // Snapshot-Felder in event_pages/{slug}.snapshot — gleiche Whitelist ohne slug.
 export const SNAPSHOT_KEYS = [
-  "eventId", "name", "startDay", "endDay", "uhrzeit", "gemeinde", "bezirk",
+  "eventId", "name", "startDay", "endDay", "uhrzeit", "gemeinde", "ort", "bezirk",
   "adresse", "typ", "beschreibung", "eintritt", "veranstalter",
 ] as const;
 export type Snapshot = Omit<PublicEvent, "slug">;
@@ -37,6 +38,9 @@ export type Snapshot = Omit<PublicEvent, "slug">;
 export interface LiveEvent extends PublicEvent {
   // eigene ID + IDs der Tages-Events (Fahrten hängen bei mehrtägigen Events an den Tagen)
   fahrtEventIds: string[];
+  // "Ich will hin" (interessentenCount). Nicht im Archiv-Snapshot, weil es sich
+  // ständig ändert. Bei mehrtägigen Events das Maximum über die Tage.
+  interessenten: number;
 }
 
 export interface EventPageDoc {
@@ -51,6 +55,10 @@ export const db = () => admin.firestore();
 
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
+}
+
+function zahl(v: unknown): number {
+  return typeof v === "number" && isFinite(v) && v > 0 ? Math.floor(v) : 0;
 }
 
 function normUhrzeit(v: unknown): string | null {
@@ -125,7 +133,8 @@ export function toPublicEvent(
   if (!name || !startDay) return null;
   const endDay = childDays.reduce((max, d) => (d > max ? d : max), startDay);
   const veranstalter = str(data["veranstalter"]);
-  const gemeinde = str(data["gemeinde"]) || str(data["standort"]);
+  const standort = str(data["standort"]);
+  const gemeinde = str(data["gemeinde"]) || standort;
   const adresse = str(data["adresse"]);
   return {
     eventId: id,
@@ -135,6 +144,7 @@ export function toPublicEvent(
     endDay,
     uhrzeit,
     gemeinde,
+    ort: standort && standort !== gemeinde ? standort : "",
     bezirk: str(data["bezirk"]),
     adresse: adresse === "Adresse nicht angegeben" ? "" : adresse,
     typ: str(data["typ"]) || "e1",
@@ -163,7 +173,7 @@ export async function loadLiveEvents(): Promise<LiveEvent[]> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.events;
 
   const snap = await db().collection("events").get();
-  const children = new Map<string, { id: string; day: string }[]>();
+  const children = new Map<string, { id: string; day: string; interessenten: number }[]>();
   const docs: admin.firestore.QueryDocumentSnapshot[] = [];
 
   for (const doc of snap.docs) {
@@ -174,7 +184,7 @@ export async function loadLiveEvents(): Promise<LiveEvent[]> {
       const day = parseDay(data["datum"], normUhrzeit(data["uhrzeit"]));
       if (!day) continue;
       const list = children.get(containerId) ?? [];
-      list.push({id: doc.id, day});
+      list.push({id: doc.id, day, interessenten: zahl(data["interessentenCount"])});
       children.set(containerId, list);
     } else {
       docs.push(doc);
@@ -186,7 +196,11 @@ export async function loadLiveEvents(): Promise<LiveEvent[]> {
     const kids = children.get(doc.id) ?? [];
     const ev = toPublicEvent(doc.id, doc.data(), kids.map((k) => k.day));
     if (!ev) continue;
-    events.push({...ev, fahrtEventIds: [doc.id, ...kids.map((k) => k.id)]});
+    events.push({
+      ...ev,
+      fahrtEventIds: [doc.id, ...kids.map((k) => k.id)],
+      interessenten: Math.max(zahl(doc.data()["interessentenCount"]), ...kids.map((k) => k.interessenten)),
+    });
   }
   events.sort((a, b) => a.startDay.localeCompare(b.startDay) || a.name.localeCompare(b.name, "de"));
 
