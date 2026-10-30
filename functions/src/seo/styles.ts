@@ -1,5 +1,9 @@
-/* EventRide – SEO-Seiten (/event/…, /krampuslaeufe-kaernten)
-   Server-gerendert, ohne JS. Tokens und Komponenten wie style.css (Navy-Theme). */
+// Stylesheet der SEO-Seiten (/event/…, /krampuslaeufe-kaernten).
+// Wird inline ausgeliefert, damit kein render-blockierender CSS-Request das
+// LCP verzögert (Ziel: Lighthouse Mobile ≥ 90). Tokens und Komponenten wie
+// public/style.css (Navy-Theme), mobil zuerst.
+
+export const SEO_CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -166,3 +170,4 @@ img, svg { max-width: 100%; }
 @media (min-width: 900px) {
   .ev-grid { grid-template-columns: repeat(3, 1fr); }
 }
+`;

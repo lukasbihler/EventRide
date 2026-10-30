@@ -2,6 +2,7 @@
 // Jeder Wert aus Firestore läuft durch esc() — auch in JSON-LD (jsonLd()).
 
 import {LiveEvent, PublicEvent, Snapshot, isoStart, kategorie} from "./data";
+import {SEO_CSS} from "./styles";
 
 export const SITE = "https://www.eventride.at";
 export const KRAMPUS_PATH = "/krampuslaeufe-kaernten";
@@ -160,8 +161,8 @@ ${o.noindex ? "<meta name=\"robots\" content=\"noindex\">" : `<link rel="canonic
 <link rel="apple-touch-icon" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;600&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="/seo.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;600&display=optional" media="print" onload="this.media='all'">
+<style>${SEO_CSS}</style>
 ${(o.jsonLd ?? []).map(jsonLd).join("\n")}
 </head>
 <body>
@@ -302,7 +303,7 @@ export function renderEventPage(i: EventPageInput): string {
     ["Ort", [adresseZeile, ev.gemeinde].filter(Boolean).map(esc).join("<br>") || "Kärnten"],
     ev.bezirk ? ["Bezirk", esc(ev.bezirk)] : null,
     ["Kategorie", esc(k.label)],
-    ev.eintritt ? ["Eintritt", esc(ev.eintritt).replace(/\n/g, "<br>")] : null,
+    ev.eintritt ? ["Eintritt", linkify(esc(ev.eintritt)).replace(/\n/g, "<br>")] : null,
     ev.veranstalter ? ["Veranstalter", esc(ev.veranstalter)] : null,
   ].filter((f): f is string[] => !!f);
 

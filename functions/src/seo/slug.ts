@@ -1,10 +1,10 @@
 // Slug-Erzeugung für die öffentlichen Event-Seiten (/event/{slug}).
 //
 // Der Slug ist zugleich der Serien-Schlüssel: gleicher Name + gleiche Gemeinde
-// = gleiche Serie = gleiche URL über die Jahre. Deshalb fliegen alle reinen
-// Zahlen-Tokens raus — Jahreszahlen ("2026") und Ordnungszahlen ("19.
-// Ebentaler Krampuslauf"), die sich jährlich ändern und die Serie sonst
-// jedes Jahr abreißen lassen würden.
+// = gleiche Serie = gleiche URL über die Jahre. Deshalb fliegen Jahreszahlen
+// ("2026") und Ordnungszahlen ("19. Ebentaler Krampuslauf") raus, die sich
+// jährlich ändern und die Serie sonst jedes Jahr abreißen lassen würden.
+// Andere Zahlen bleiben ("90s Party").
 
 const UMLAUTE: Record<string, string> = {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"};
 
@@ -17,10 +17,13 @@ const MAX_LEN = 80;
 export function tokenize(s: string): string[] {
   return s
     .toLowerCase()
+    .replace(/(^|\s)\d{1,3}\.(?=\s|$)/g, " ") // Ordnungszahl "19."
+    .replace(/\b(19|20)\d{2}\b/g, " ")        // Jahreszahl
+    .replace(/['’´`]/g, "")                    // "90's" → "90s"
     .replace(/[äöüß]/g, (c) => UMLAUTE[c])
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 0 && !/^\d+$/.test(t));
+    .filter((t) => t.length > 0);
 }
 
 // Zusätze ab "in"/"am"/… gehören nicht in den Slug:

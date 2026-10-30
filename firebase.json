@@ -27,8 +27,7 @@
     "headers": [
       { "source": "/eventride_manager.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
       { "source": "/auth/**", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
-      { "source": "/assets/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
-      { "source": "/seo.css", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }] }
+      { "source": "/assets/**", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] }
     ]
   },
   "flutter": {
