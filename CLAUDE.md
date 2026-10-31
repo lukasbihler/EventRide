@@ -255,3 +255,5 @@ Alle offenen Punkte stehen als Checklisten in [`plans/`](plans/), der Kurzstand 
 - Erledigte Punkte in `plans/` sofort abhaken: `- [x] … (YYYY-MM-DD)`
 - Neue Aufgaben als `- [ ]` in den passenden Plan eintragen (kein passender Plan → neue Datei in `plans/` mit Ziel + Deadline oben und in der Tabelle oben ergänzen)
 - `STATUS.md` bei `/feierabend` aktualisieren
+- Zu Beginn jeder Session `git pull --rebase` (Jarvis schreibt Haken und Notizen direkt auf GitHub)
+- Zeilen `> Jarvis TT.MM.: …` in `plans/` sind Infos von Lukas: berücksichtigen, nicht löschen
