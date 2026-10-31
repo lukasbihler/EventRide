@@ -455,7 +455,7 @@ ${o.noindex ? "<meta name=\"robots\" content=\"noindex\">" : `<link rel="canonic
 ${o.preload ? `<link rel="preload" as="image" href="${o.preload}-640.jpg" media="(max-width: 1023px)" fetchpriority="high">\n<link rel="preload" as="image" href="${o.preload}.jpg" media="(min-width: 1024px)" fetchpriority="high">` : ""}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=optional" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=optional" media="print" onload="this.media='all'">
 <style>${SEO_CSS}</style>
 ${SPECULATION}
 ${(o.jsonLd ?? []).map(jsonLd).join("\n")}

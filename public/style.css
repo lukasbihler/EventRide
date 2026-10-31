@@ -1,8 +1,5 @@
 /* EventRide – Website Styles v3 (refined) */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-/* Dunkles unteres Verlaufsende: blitzt am Handy durch, wenn beim Scrollen
-   noch nicht alles gezeichnet ist (sonst weiß). */
-html { background: #20367E; }
 
 .site {
   /* NAVY (default, matches app) */
