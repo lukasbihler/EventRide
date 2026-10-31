@@ -2,6 +2,8 @@
 
 _Stand: 2026-05-02_
 
+> **Offene Punkte werden in [plans/app-release.md](plans/app-release.md) gepflegt.** Diese Datei enthält nur noch die Fix-Details.
+
 ---
 
 ## 🔴 BLOCKING — Release-Stopper
