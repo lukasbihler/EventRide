@@ -1,10 +1,7 @@
 name: Build iOS IPA (unsigned)
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+  workflow_dispatch:   # nur manuell – iOS-Builds laufen über Codemagic
 
 jobs:
   build-ios:
