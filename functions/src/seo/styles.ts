@@ -18,6 +18,12 @@
 // (.glass-img, Pills) dunkelt per backdrop-filter auf 85 % ab: Weiß auf
 // Weiß-10-%-Glas 5,1:1 (ohne die Abdunklung wären es nur 4,1:1). Die Glas-Boxen
 // (.eb) liegen unterhalb des Kopfbilds und brauchen das nicht.
+//
+// Schrift der Eventkarten wie die iOS-App (main.dart: Systemschrift statt
+// Poppins, eventcard_widget.dart): Titel schwer, Datum/Uhrzeit dünn, Ort normal,
+// Zahlen klein. Gedimmt wird nicht wie in der App auf 70 % Weiß (auf Glas nur
+// 3,5:1), sondern über Stärke und Größe; Text bleibt bei 91 % Weiß (4,7:1).
+const SYS_FONT = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
 
 export const CARD_CSS = `
 /* ─── SEITENWECHSEL ───
@@ -70,6 +76,7 @@ details[open] > .pill svg { transform: rotate(180deg); }
 .pc {
   position: relative; isolation: isolate; overflow: hidden;
   display: flex; min-height: 124px; border-radius: 16px;
+  font-family: ${SYS_FONT};
   color: #fff; text-decoration: none; background: #2C3242;
   box-shadow: 0 6px 16px rgba(0,0,0,.28);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
@@ -86,12 +93,17 @@ details[open] > .pill svg { transform: rotate(180deg); }
 .pc-past .pc-img { filter: grayscale(.8); }
 .pc-date, .pc-chip { display: none; }
 .pc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 14px 40px 14px 18px; }
-.pc-name {
-  font-size: 1.1rem; font-weight: 800; line-height: 1.25; letter-spacing: -.01em;
+/* .pc .pc-name schlägt ".site h3 { Poppins }" der Startseite */
+.pc .pc-name {
+  font-family: inherit; font-size: 1.2rem; font-weight: 800; line-height: 1.22; letter-spacing: -.01em;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   text-shadow: 0 1px 6px rgba(0,0,0,.5);
 }
-.pc-row { display: flex; align-items: center; gap: 6px; font-size: .92rem; min-width: 0; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.pc-row {
+  display: flex; align-items: center; gap: 6px; font-size: 1rem; font-weight: 400; min-width: 0;
+  color: rgba(255,255,255,.91); text-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+.pc-when { font-weight: 300; font-variant-numeric: tabular-nums; }
 .pc-row svg { width: 16px; height: 16px; flex-shrink: 0; fill: currentColor; }
 .pc-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pc .i-amber { color: #FFC107; }
@@ -134,8 +146,8 @@ details[open] > .pill svg { transform: rotate(180deg); }
     background: rgba(20,24,34,.6); border: 1px solid rgba(255,255,255,.25);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
-  .pc-date small { font-size: .62rem; font-weight: 700; letter-spacing: .1em; }
-  .pc-date b { font-size: 1.35rem; font-weight: 800; }
+  .pc-date small { font-size: .62rem; font-weight: 600; letter-spacing: .1em; }
+  .pc-date b { font-size: 1.35rem; font-weight: 700; }
   .pc-chip {
     display: inline-block; position: absolute; top: 10px; right: 10px; z-index: 1;
     font-size: .64rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
@@ -144,12 +156,12 @@ details[open] > .pill svg { transform: rotate(180deg); }
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
   .pc-body { justify-content: flex-start; padding: 12px 16px 12px; }
-  .pc-name { font-size: 1.05rem; min-height: 2.5em; text-shadow: none; }
-  .pc-row { text-shadow: none; }
+  .pc .pc-name { font-size: 1.12rem; min-height: 2.44em; text-shadow: none; }
+  .pc-row { font-size: .95rem; text-shadow: none; }
   .pc-foot {
     margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.16);
     display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px;
-    font-size: .84rem;
+    font-size: .8rem; color: rgba(255,255,255,.91);
   }
   .pc-foot > span { display: inline; }
   .pc-arrow { position: static; transform: none; fill: #F5A04A; flex-shrink: 0; }
@@ -174,6 +186,18 @@ details[open] > .pill svg { transform: rotate(180deg); }
 export const SEO_CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Ersatzschrift mit den Maßen von Poppins (Werte aus @capsizecss/metrics,
+   gleiche Rechnung wie next/font). Kommt Poppins (display=optional) gerade noch
+   rechtzeitig, verschiebt sich dadurch nichts mehr (CLS). */
+@font-face {
+  font-family: "Poppins Fallback"; src: local("Arial"), local("ArialMT");
+  size-adjust: 112.16%; ascent-override: 93.62%; descent-override: 31.21%; line-gap-override: 8.92%;
+}
+@font-face {
+  font-family: "Poppins Fallback Roboto"; src: local("Roboto"), local("Roboto-Regular");
+  size-adjust: 112.4%; ascent-override: 93.41%; descent-override: 31.14%; line-gap-override: 8.9%;
+}
+
 :root {
   --accent:   #F5A04A;
   --accent-2: #FFB662;
@@ -193,7 +217,7 @@ export const SEO_CSS = `
 html { background: #233B8A; }
 body {
   position: relative;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Poppins', 'Poppins Fallback', 'Poppins Fallback Roboto', sans-serif;
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -298,7 +322,7 @@ main { position: relative; isolation: isolate; }
 .eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .eb {
   display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 12px 14px 12px 12px;
-  border-radius: 16px; color: #fff; text-decoration: none;
+  border-radius: 16px; color: #fff; text-decoration: none; font-family: ${SYS_FONT};
   background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
   box-shadow: 0 4px 14px rgba(0,0,0,.14);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
@@ -311,18 +335,18 @@ main { position: relative; isolation: isolate; }
   background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
 }
 .eb-plak svg { width: 16px; height: 16px; }
-.eb-plak b { font-size: 1.02rem; font-weight: 800; letter-spacing: -.01em; }
-.eb-plak small { font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.eb-past .eb-plak b { font-size: 1.3rem; }
+.eb-plak b { font-size: 1.05rem; font-weight: 300; font-variant-numeric: tabular-nums; }
+.eb-plak small { font-size: .62rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.eb-past .eb-plak b { font-size: 1.3rem; font-weight: 600; }
 .eb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .eb-name {
-  font-size: 1rem; font-weight: 800; line-height: 1.25; letter-spacing: -.01em;
+  font-family: inherit; font-size: 1.08rem; font-weight: 800; line-height: 1.22; letter-spacing: -.01em;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.eb-row { display: flex; align-items: center; gap: 5px; font-size: .88rem; min-width: 0; }
+.eb-row { display: flex; align-items: center; gap: 5px; font-size: .95rem; font-weight: 400; min-width: 0; color: rgba(255,255,255,.91); }
 .eb-row svg { width: 15px; height: 15px; flex-shrink: 0; }
 .eb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.eb-zahlen { font-size: .8rem; font-weight: 600; color: var(--muted); }
+.eb-zahlen { font-size: .8rem; font-weight: 400; color: rgba(255,255,255,.91); }
 .eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

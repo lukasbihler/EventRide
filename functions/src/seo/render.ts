@@ -311,10 +311,10 @@ export function eventCard(ev: CardEvent, o: CardOpts = {}): string {
   // am Handy Datum + Uhrzeit — außer in Tagesgruppen (dann nur Uhrzeit).
   let wann = "";
   if (o.nurZeit) {
-    if (zeit) wann = `<span class="pc-row">${icon(P_TIME, "i-amber")}<span>${esc(zeit)}</span></span>`;
+    if (zeit) wann = `<span class="pc-row pc-when">${icon(P_TIME, "i-amber")}<span>${esc(zeit)}</span></span>`;
   } else {
     const tage = kartenTage(ev, !!o.past);
-    wann = `<span class="pc-row${zeit ? "" : " m-only"}">${icon(P_DATE, "i-amber m-only")}${icon(P_TIME, "i-amber d-only")}` +
+    wann = `<span class="pc-row pc-when${zeit ? "" : " m-only"}">${icon(P_DATE, "i-amber m-only")}${icon(P_TIME, "i-amber d-only")}` +
       `<span><span class="m-only">${esc(tage)}${zeit ? " · " : ""}</span>${esc(zeit)}</span></span>`;
   }
   const zahlen = o.past ? "" : zahlenZeile(ev.fahrten ?? 0, ev.interessenten ?? 0);
