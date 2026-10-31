@@ -2,6 +2,10 @@
 #
 # Neue Bilder in  public/assets/image/{kategorie}/neu/  legen (jpg/png/webp),
 # Kategorien: kirchtag, feuerwehr, disco, ball, krampus, festival, beach.
+# Themenbilder (z. B. halloween) genauso unter  public/assets/image/{thema}/neu/
+# ablegen; jeder weitere Ordner dort wird mitverarbeitet. Damit das Bild
+# verwendet wird, in functions/src/seo/hubs.ts beim Thema das Feld image setzen
+# (letzter Parameter von themaHub, z. B. "halloween").
 # Dann:  powershell -ExecutionPolicy Bypass -File scripts/seo_bilder.ps1
 #
 # Pro Bild entstehen  {n}.jpg  (1200x630, Header + og:image) und  {n}-640.jpg
@@ -13,7 +17,10 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName PresentationCore
 $root = Split-Path $PSScriptRoot -Parent
-$kategorien = 'kirchtag', 'feuerwehr', 'disco', 'ball', 'krampus', 'festival', 'beach'
+$kategorien = @('kirchtag', 'feuerwehr', 'disco', 'ball', 'krampus', 'festival', 'beach')
+$kategorien += @(Get-ChildItem (Join-Path $root 'public\assets\image') -Directory |
+  Where-Object { $kategorien -notcontains $_.Name -and $_.Name -match '^[a-z][a-z0-9]*$' } |
+  Sort-Object Name | ForEach-Object { $_.Name })
 
 function Laden($pfad) {
   $s = [IO.File]::OpenRead($pfad)
@@ -65,7 +72,7 @@ foreach ($kat in $kategorien) {
 $zeilen = ($anzahl.Keys | ForEach-Object { "  $($_): $($anzahl[$_])," }) -join "`n"
 $ts = @"
 // Automatisch erzeugt von scripts/seo_bilder.ps1 - nicht von Hand bearbeiten.
-// Anzahl der Bildvarianten pro Kategorie unter public/assets/image/{kategorie}/.
+// Anzahl der Bildvarianten pro Kategorie bzw. Thema unter public/assets/image/{name}/.
 
 export const BILDER: Record<string, number> = {
 $zeilen

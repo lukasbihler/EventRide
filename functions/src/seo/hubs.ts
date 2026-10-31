@@ -5,7 +5,8 @@
 // über den Eventnamen erkannt (es gibt kein eigenes Feld dafür) und tauchen
 // nur auf, wenn es dazu Termine gibt — leere Seiten sind noindex.
 
-import {addDays} from "./data";
+import {addDays, bildPfad, kategorie} from "./data";
+import {BILDER} from "./bilder";
 
 export type HubKind = "alle" | "typ" | "thema" | "bezirk" | "wochenende";
 
@@ -20,7 +21,8 @@ export interface Hub {
   kind: HubKind;
   chip: string;   // Beschriftung im Chip-Filter (wie in der App)
   crumb: string;  // Breadcrumb und Linktext
-  img: string;    // Bild-Key unter /assets/og/
+  img: string;    // Bild-Key (Kategoriebild, siehe bildPfad)
+  image?: string; // Themenbild: Ordner unter /assets/image/ (optional, siehe pickImage)
   dimTyp: string; // Abdunklung wie in der App (hintergrundHelligkeit)
   h1: (jahr: string) => string;
   title: (jahr: string) => string;
@@ -48,10 +50,10 @@ function typHub(
 
 function themaHub(
   path: string, chip: string, img: string, dimTyp: string, re: RegExp,
-  h1: string, titel: string, beschreibung: string, lead: string
+  h1: string, titel: string, beschreibung: string, lead: string, image?: string
 ): Hub {
   return {
-    path, kind: "thema", chip, crumb: `${chip} in Kärnten`, img, dimTyp,
+    path, kind: "thema", chip, crumb: `${chip} in Kärnten`, img, image, dimTyp,
     h1: (j) => `${h1} ${j}`,
     title: (j) => `${titel.replace("{J}", j)} | EventRide`,
     description: (j, n) => `${beschreibung.replace("{J}", j).replace("{N}", String(n))} Mit Ort, Uhrzeit und Mitfahrgelegenheit über die EventRide App.`,
@@ -188,6 +190,24 @@ export function hubForTyp(typ: string): Hub {
 
 export function hubForBezirk(bezirk: string): Hub | undefined {
   return bezirk ? BEZIRK_HUBS.find((h) => h.match({typ: "", name: "", bezirk})) : undefined;
+}
+
+// Themenbild nur, wenn es in der Config steht und Varianten dafür existieren
+// (scripts/seo_bilder.ps1 legt sie an und zählt sie in bilder.ts).
+function themenBild(hub: Hub | undefined): string | undefined {
+  return hub?.image && (BILDER[hub.image] ?? 0) > 0 ? hub.image : undefined;
+}
+
+// Bild eines Events: zuerst das Themenbild (erstes passendes Thema mit Bild),
+// sonst das Kategoriebild. Pfad ohne Endung, wie bildPfad().
+export function pickImage(ev: { typ: string; name: string; slug: string | null | undefined }): string {
+  const thema = THEMEN_HUBS.find((h) => themenBild(h) && h.match({typ: ev.typ, name: ev.name, bezirk: ""}));
+  return bildPfad(themenBild(thema) ?? kategorie(ev.typ).img, ev.slug);
+}
+
+// Kopf- und Vorschaubild einer Übersichtsseite.
+export function hubBild(hub: Hub): string {
+  return bildPfad(themenBild(hub) ?? hub.img, null);
 }
 
 // Freitag–Sonntag des Wochenendes, in dem `day` liegt (bzw. des folgenden

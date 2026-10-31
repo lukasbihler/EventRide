@@ -10,6 +10,11 @@
 // unter 45 % Schwarz. Hellste Stelle #B79B78 → #655542: Weiß darauf 6,6:1,
 // auf Glas (Weiß 12 %) 5,3:1 (WCAG AA). Diese Farbe steht auch als
 // html-Hintergrund, damit Lighthouse den ungünstigsten Fall prüft.
+//
+// Kopfbild (.head-bg): 35 % Deckkraft, brightness(.6). Ungünstigster Fall —
+// rein weißes Bildpixel über #655542 — Weiß darauf 5,1:1. Glas über dem Bild
+// (.glass-img, .eb, Pills) dunkelt per backdrop-filter auf 85 % ab: Weiß auf
+// Weiß-10-%-Glas 5,1:1 (ohne die Abdunklung wären es nur 4,1:1).
 
 export const CARD_CSS = `
 /* ─── FILTER-PILLS (eine Zeile, am Handy scrollbar) ─── */
@@ -51,10 +56,10 @@ details[open] > .pill svg { transform: rotate(180deg); }
   display: flex; min-height: 124px; border-radius: 16px;
   color: #fff; text-decoration: none; background: #2C3242;
   box-shadow: 0 6px 16px rgba(0,0,0,.28);
-  transition: transform .18s ease, box-shadow .18s ease;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .pc-media { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
-.pc-img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 55% 52%; transition: transform .35s ease; }
+.pc-img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 55% 52%; }
 .pc-media::after {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(90deg, rgba(0,0,0,var(--l)) 0%, rgba(0,0,0,calc(var(--l) * .7)) 45%, rgba(0,0,0,0) 85%);
@@ -79,13 +84,19 @@ details[open] > .pill svg { transform: rotate(180deg); }
 .pc-foot > span { display: none; }
 .pc-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: rgba(255,255,255,.8); }
 
-/* Hover wie früher: anheben, orangener Schatten, Bild leicht zoomen */
+/* Hover (Poster-Karten und Glas-Boxen .eb): 2 px anheben, weicher orangener
+   Schatten, Rand leicht orange. Bei reduzierter Bewegung nur der Schatten. */
 @media (hover: hover) {
-  .pc:hover { transform: translateY(-3px); box-shadow: 0 14px 30px -10px rgba(245,160,74,.6), 0 6px 16px rgba(0,0,0,.25); }
-  .pc:hover .pc-img { transform: scale(1.05); }
+  .pc:hover, .eb:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(245,160,74,.25); border-color: rgba(245,160,74,.5); }
 }
-.pc:focus-visible { outline: 2px solid #F5A04A; outline-offset: 3px; transform: translateY(-3px); box-shadow: 0 14px 30px -10px rgba(245,160,74,.6); }
-.pc:focus-visible .pc-img { transform: scale(1.05); }
+.pc:focus-visible, .eb:focus-visible {
+  outline: 2px solid #F5A04A; outline-offset: 3px;
+  transform: translateY(-2px); box-shadow: 0 8px 28px rgba(245,160,74,.25); border-color: rgba(245,160,74,.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pc, .eb { transition: box-shadow .2s ease, border-color .2s ease; }
+  .pc:hover, .eb:hover, .pc:focus-visible, .eb:focus-visible { transform: none; }
+}
 
 @media (min-width: 640px) {
   .filters-row { margin: 0; padding: 0; overflow: visible; }
@@ -125,8 +136,7 @@ details[open] > .pill svg { transform: rotate(180deg); }
     font-size: .84rem;
   }
   .pc-foot > span { display: inline; }
-  .pc-arrow { position: static; transform: none; fill: #F5A04A; flex-shrink: 0; transition: transform .2s; }
-  .pc:hover .pc-arrow { transform: translateX(3px); }
+  .pc-arrow { position: static; transform: none; fill: #F5A04A; flex-shrink: 0; }
 }
 @media (min-width: 1024px) {
   .pc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -238,7 +248,63 @@ svg { fill: currentColor; }
 }
 
 /* ─── SEITE ─── */
+main { position: relative; isolation: isolate; }
 .page { max-width: var(--maxw); margin: 0 auto; padding: 16px 16px 40px; }
+
+/* Dezentes Kopfbild (Kategorie-/Themenseiten, Event-Seite): kein Bildbalken,
+   läuft nach unten und zu den Seiten in den App-Verlauf aus. */
+.head-bg {
+  position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%);
+  width: min(100%, 1440px); height: 220px; overflow: hidden; pointer-events: none;
+  --fade-x: 8%;
+  -webkit-mask-image: linear-gradient(#000 35%, transparent), linear-gradient(90deg, transparent, #000 var(--fade-x), #000 calc(100% - var(--fade-x)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(#000 35%, transparent), linear-gradient(90deg, transparent, #000 var(--fade-x), #000 calc(100% - var(--fade-x)), transparent);
+  mask-composite: intersect;
+}
+.head-bg img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; opacity: .35; filter: brightness(.6); }
+
+/* Glas über dem Kopfbild: dunkelt den Hintergrund ab (Kontrast, s. oben) */
+.glass-img, .has-head .pill {
+  backdrop-filter: blur(16px) brightness(.85); -webkit-backdrop-filter: blur(16px) brightness(.85);
+}
+.glass-img { background: rgba(255,255,255,.10); }
+
+/* Kompakte Glas-Boxen (Listen auf Kategorie- und Themenseiten) */
+.eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.eb {
+  display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 12px 14px 12px 12px;
+  border-radius: 16px; color: #fff; text-decoration: none;
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
+  backdrop-filter: blur(14px) brightness(.85); -webkit-backdrop-filter: blur(14px) brightness(.85);
+  box-shadow: 0 4px 14px rgba(0,0,0,.14);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.eb-plak {
+  flex-shrink: 0; width: 60px; min-height: 60px; padding: 6px 4px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border-radius: 12px; line-height: 1.1; text-align: center;
+  /* dunkles Glas wie die Info-Kacheln: helles Glas auf der Box läge unter 4,5:1 */
+  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
+}
+.eb-plak svg { width: 16px; height: 16px; }
+.eb-plak b { font-size: 1.02rem; font-weight: 800; letter-spacing: -.01em; }
+.eb-plak small { font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.eb-past .eb-plak b { font-size: 1.3rem; }
+.eb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.eb-name {
+  font-size: 1rem; font-weight: 800; line-height: 1.25; letter-spacing: -.01em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.eb-row { display: flex; align-items: center; gap: 5px; font-size: .88rem; min-width: 0; }
+.eb-row svg { width: 15px; height: 15px; flex-shrink: 0; }
+.eb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eb-zahlen { font-size: .8rem; font-weight: 600; color: var(--muted); }
+.eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-img, .eb, .has-head .pill { background: rgba(20,24,34,.35); }
+}
 .crumbs { font-size: .78rem; color: var(--muted); margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
 .crumbs a { text-decoration: none; }
 .crumbs a:hover { text-decoration: underline; }
@@ -261,10 +327,9 @@ svg { fill: currentColor; }
 .more:hover { text-decoration: underline; }
 
 /* ─── EVENT-SEITE ─── */
-.ev-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+/* Glasfläche liegt über dem Kopfbild, oberhalb bleibt ein Streifen frei */
+.ev-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 32px; }
 .ev-main { padding: 10px; }
-.ev-hero { height: 160px; border-radius: 16px; overflow: hidden; background: #2C3242; }
-.ev-hero img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 55% 50%; }
 .ev-title { padding: 14px 8px 6px; }
 .ev-chip {
   display: inline-block; font-size: .68rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
@@ -381,8 +446,10 @@ a.ev-chip:hover { border-color: var(--accent); }
 @media (min-width: 640px) {
   .page { padding: 24px 24px 64px; }
   .m-stores { display: none; }
+  .head-bg { height: 360px; --fade-x: 12%; }
+  .eb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .ev-layout { margin-top: 72px; }
   .ev-main { padding: 12px; }
-  .ev-hero { height: auto; aspect-ratio: 21 / 9; }
   .ev-title { padding: 18px 10px 8px; }
   .tiles { padding: 10px 0 0; gap: 12px; }
   .t-wann, .t-wo, .t-eintritt, .t-veranst { grid-column: auto; }
@@ -397,7 +464,7 @@ a.ev-chip:hover { border-color: var(--accent); }
   .footer-cols { grid-template-columns: repeat(3, 1fr); }
 }
 @media (min-width: 1024px) {
-  .ev-layout { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; }
+  .ev-layout { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; margin-top: 110px; }
   .ev-side { position: sticky; top: 86px; }
   .ev-zahlen { display: none; }
 }

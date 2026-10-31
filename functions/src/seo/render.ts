@@ -1,12 +1,16 @@
 // HTML-Templates der SEO-Seiten. Reines Server-HTML ohne JavaScript.
 // Jeder Wert aus Firestore läuft durch esc() — auch in JSON-LD (jsonLd()).
 //
-// Eventkarten: am Desktop Poster (Bild oben, Glas darunter), am Handy wie
-// eventcard_widget.dart der App — gleiches Markup, das CSS schaltet um.
+// Bilder je nach Seitentyp:
+// - Kategorie-/Themenseiten und Event-Seiten: dezentes Kopfbild hinter dem
+//   oberen Bereich, Listen als kompakte Glas-Boxen ohne Foto.
+// - Gemischte Listen (Startseite, Alle, Bezirke, Wochenende, "Weitere Events"):
+//   Poster-Karten — am Desktop Bild oben, Glas darunter, am Handy wie
+//   eventcard_widget.dart der App (gleiches Markup, das CSS schaltet um).
 // Event-Seite: Glasfläche mit Info-Kacheln, rechts eine Mitfahren-Spalte.
 
-import {LiveEvent, PublicEvent, Snapshot, bildPfad, isoStart, kategorie, addDays} from "./data";
-import {ALLE, BEZIRK_HUBS, Hub, KATEGORIE_HUBS, WOCHENENDE, hubForBezirk, hubForTyp} from "./hubs";
+import {LiveEvent, PublicEvent, Snapshot, isoStart, kategorie, addDays} from "./data";
+import {ALLE, BEZIRK_HUBS, Hub, KATEGORIE_HUBS, WOCHENENDE, hubBild, hubForBezirk, hubForTyp, pickImage} from "./hubs";
 import {SEO_CSS} from "./styles";
 
 export const SITE = "https://www.eventride.at";
@@ -313,7 +317,7 @@ export function eventCard(ev: CardEvent, o: CardOpts = {}): string {
   const zahlen = o.past ? "" : zahlenZeile(ev.fahrten ?? 0, ev.interessenten ?? 0);
 
   return `<a class="pc ${dim(ev.typ)}${o.past ? " pc-past" : ""}" href="/event/${esc(ev.slug)}">
-  <span class="pc-media"><img class="pc-img" src="${bildPfad(k.img, ev.slug)}-640.jpg" alt="" width="640" height="360"${o.eager ? "" : " loading=\"lazy\""} decoding="async">
+  <span class="pc-media"><img class="pc-img" src="${pickImage(ev)}-640.jpg" alt="" width="640" height="360"${o.eager ? "" : " loading=\"lazy\""} decoding="async">
     <span class="pc-date" aria-hidden="true"><small>${WT[p.wd].toUpperCase()}</small><b>${p.d}</b><small>${MON_PLAKETTE[p.m - 1]}</small></span>${chip}</span>
   <span class="pc-body">
     <h3 class="pc-name">${esc(ev.name)}</h3>
@@ -324,17 +328,44 @@ export function eventCard(ev: CardEvent, o: CardOpts = {}): string {
 </a>`;
 }
 
-export function cardGrid(events: CardEvent[], o: CardOpts & { eagerCount?: number } = {}): string {
+// Kompakte Glas-Box (Kategorie-/Themenseiten): Plakette mit der Uhrzeit (das
+// Datum steht in der Tages-Überschrift), bei vergangenen Terminen mit dem Datum.
+export function eventBox(ev: CardEvent, o: CardOpts = {}): string {
+  const p = parts(ev.startDay);
+  const plakette = o.past ?
+    `<b>${p.d}</b><small>${MON_PLAKETTE[p.m - 1]} ${p.y}</small>` :
+    `${icon(P_DATE, "i-amber")}${ev.uhrzeit ? `<b>${esc(ev.uhrzeit)}</b>` : "<small>Zeit offen</small>"}`;
+  const zahlen = o.past ? "" : zahlenZeile(ev.fahrten ?? 0, ev.interessenten ?? 0);
+  return `<a class="eb${o.past ? " eb-past" : ""}" href="/event/${esc(ev.slug)}">
+  <span class="eb-plak">${plakette}</span>
+  <span class="eb-body">
+    <h3 class="eb-name">${esc(ev.name)}</h3>
+    <span class="eb-row">${icon(P_PIN, "i-red")}<span>${esc(ev.gemeinde || "Kärnten")}</span></span>
+    ${zahlen ? `<span class="eb-zahlen">${esc(zahlen)}</span>` : ""}
+  </span>
+  ${icon(P_FWD, "eb-arrow")}
+</a>`;
+}
+
+export function cardGrid(events: CardEvent[], o: CardOpts & { eagerCount?: number; box?: boolean } = {}): string {
+  if (o.box) return `<div class="eb-grid">${events.map((e) => eventBox(e, o)).join("")}</div>`;
   const eagerCount = o.eagerCount ?? 0;
   return `<div class="pc-grid">${events.map((e, i) => eventCard(e, {...o, eager: i < eagerCount})).join("")}</div>`;
 }
 
 function cardSection(
-  title: string, events: CardEvent[], o: CardOpts & { more?: Hub } = {}
+  title: string, events: CardEvent[], o: CardOpts & { more?: Hub; box?: boolean } = {}
 ): string {
   if (events.length === 0) return "";
   const more = o.more ? `<a class="more" href="${o.more.path}">Alle ${esc(o.more.crumb)}${icon(P_FWD)}</a>` : "";
   return `<section class="group"><h2>${esc(title)}</h2>${cardGrid(events, o)}${more}</section>`;
+}
+
+// Dezentes Kopfbild hinter Breadcrumb/H1 bzw. der Glasfläche der Event-Seite.
+// Rein dekorativ; läuft per mask-image nach unten und zu den Seiten aus.
+// Gleiche Umschaltbreite (1024 px) wie der Preload im <head>.
+function kopfbild(bild: string): string {
+  return `<div class="head-bg"><picture><source media="(min-width: 1024px)" srcset="${bild}.jpg"><img src="${bild}-640.jpg" alt="" width="640" height="360" fetchpriority="high" decoding="async"></picture></div>`;
 }
 
 // ── Layout ───────────────────────────────────────────────────────────────────
@@ -344,7 +375,7 @@ interface LayoutOpts {
   description: string;
   path: string;
   image: string;
-  preload?: string; // LCP-Bild (Event-Header)
+  preload?: string; // Kopfbild (Pfad ohne Endung)
   body: string;
   hubs: Set<string>; // Pfade der Übersichtsseiten mit Inhalt (für Footer-Links)
   jsonLd?: unknown[];
@@ -464,7 +495,7 @@ export function renderEventPage(i: EventPageInput): string {
   const path = `/event/${slug}`;
   const venue = ev.ort || "";
   const adr = adressTeile(ev);
-  const bild = bildPfad(k.img, slug);
+  const bild = pickImage({typ: ev.typ, name: ev.name, slug});
   const nameMitJahr = ev.name.includes(jahr(ev.startDay)) ? ev.name : `${ev.name} ${jahr(ev.startDay)}`;
   const title = `${nameMitJahr} – Termin, Ort & Mitfahrgelegenheit | EventRide`;
   const zeit = ev.uhrzeit ? ` ab ${ev.uhrzeit} Uhr` : "";
@@ -555,12 +586,12 @@ export function renderEventPage(i: EventPageInput): string {
     ${appButtons(campaign, "side-btns")}` : `<h2>EventRide App</h2>
     <p class="side-zahlen">Mitfahrgelegenheiten zu allen Events in Kärnten – kostenlos für iOS und Android.</p>`;
 
-  const body = `<div class="page">
+  const body = `${kopfbild(bild)}
+<div class="page">
   ${crumbs.html}
   ${hinweis}
   <div class="ev-layout">
-    <article class="glass ev-main">
-      <div class="ev-hero"><picture><source media="(min-width: 1024px)" srcset="${bild}.jpg"><img src="${bild}-640.jpg" alt="" width="640" height="360" fetchpriority="high"></picture></div>
+    <article class="glass glass-img ev-main">
       <header class="ev-title">
         ${chip}
         <h1>${esc(ev.name)}</h1>
@@ -570,7 +601,7 @@ export function renderEventPage(i: EventPageInput): string {
       <div class="tiles">${tiles}</div>
     </article>
     <aside class="ev-side" aria-label="Mitfahren">
-      <div class="glass side">
+      <div class="glass glass-img side">
         ${seite}
         <div class="qr">${i.qr}<p>Mit dem Handy scannen und die App holen</p></div>
         ${storeBadges(campaign)}
@@ -621,7 +652,7 @@ function tagTitel(day: string, heute: string): string {
 }
 
 // Gruppierung nach Tag (Wiener Zeit). Laufende mehrtägige Events stehen unter "Heute".
-export function tagesGruppen(upcoming: CardEvent[], heute: string, tag: boolean, eagerCount = 3): string {
+export function tagesGruppen(upcoming: CardEvent[], heute: string, o: CardOpts & { box?: boolean }, eagerCount = 3): string {
   const gruppen = new Map<string, CardEvent[]>();
   for (const ev of upcoming) {
     const key = ev.startDay < heute ? heute : ev.startDay;
@@ -631,15 +662,16 @@ export function tagesGruppen(upcoming: CardEvent[], heute: string, tag: boolean,
   const nachZeit = (a: CardEvent, b: CardEvent) => (a.uhrzeit ?? "99").localeCompare(b.uhrzeit ?? "99");
   return [...gruppen.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([day, liste]) => {
     const events = [...liste].sort(nachZeit);
-    const grid = cardGrid(events, {tag, nurZeit: true, eagerCount: rest});
+    const grid = cardGrid(events, {...o, nurZeit: true, eagerCount: rest});
     rest = Math.max(0, rest - events.length);
     return `<section class="day"><h2 class="day-h">${esc(tagTitel(day, heute))}<span>${events.length === 1 ? "1 Event" : `${events.length} Events`}</span></h2>${grid}</section>`;
   }).join("\n");
 }
 
-// Gemischte Listen zeigen den Kategorie-Chip auf den Karten.
-function gemischt(hub: Hub): boolean {
-  return hub.kind === "alle" || hub.kind === "bezirk" || hub.kind === "wochenende";
+// Kategorie- und Themenseiten: Kopfbild + Glas-Boxen. Gemischte Listen (Alle,
+// Bezirke, Wochenende): Poster-Karten mit Kategorie-Chip, kein Kopfbild.
+function mitKopfbild(hub: Hub): boolean {
+  return hub.kind === "typ" || hub.kind === "thema";
 }
 
 export function renderHubPage(i: HubPageInput, heute: string): string {
@@ -676,7 +708,10 @@ export function renderHubPage(i: HubPageInput, heute: string): string {
     })),
   };
 
-  const body = `<div class="page">
+  const kopf = mitKopfbild(hub);
+  const bild = hubBild(hub);
+  const body = `${kopf ? kopfbild(bild) : ""}
+<div class="page${kopf ? " has-head" : ""}">
   ${crumbs.html}
   <header class="hub-head">
     <h1>${esc(hub.h1(j))}</h1>
@@ -685,8 +720,8 @@ export function renderHubPage(i: HubPageInput, heute: string): string {
   ${filterBar(hub.path, i)}
   <div id="events">
     ${leer}
-    ${tagesGruppen(i.upcoming, heute, gemischt(hub))}
-    ${cardSection("Bisherige Termine", i.past, {past: true})}
+    ${tagesGruppen(i.upcoming, heute, kopf ? {box: true} : {tag: true})}
+    ${cardSection("Bisherige Termine", i.past, {past: true, box: kopf})}
   </div>
   <section class="glass about">
     <h2>Über ${esc(hub.crumb)}</h2>
@@ -703,7 +738,8 @@ export function renderHubPage(i: HubPageInput, heute: string): string {
     title: hub.title(j),
     description: kurz(hub.description(j, n), 160),
     path: hub.path,
-    image: SITE + bildPfad(hub.img, null) + ".jpg",
+    image: SITE + bild + ".jpg",
+    preload: kopf ? bild : undefined,
     body,
     hubs: i.aktiv,
     noindex,

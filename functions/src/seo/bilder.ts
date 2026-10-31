@@ -1,5 +1,5 @@
 // Automatisch erzeugt von scripts/seo_bilder.ps1 - nicht von Hand bearbeiten.
-// Anzahl der Bildvarianten pro Kategorie unter public/assets/image/{kategorie}/.
+// Anzahl der Bildvarianten pro Kategorie bzw. Thema unter public/assets/image/{name}/.
 
 export const BILDER: Record<string, number> = {
   kirchtag: 1,
