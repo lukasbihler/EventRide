@@ -371,6 +371,17 @@ function kopfbild(bild: string): string {
   return `<div class="head-bg"><picture><source media="(min-width: 1024px)" srcset="${bild}.jpg"><img src="${bild}-640.jpg" alt="" width="640" height="360" fetchpriority="high" decoding="async"></picture></div>`;
 }
 
+// Speculation Rules (Chrome/Edge): interne Links werden beim Antippen bzw.
+// Überfahren mit der Maus im Hintergrund fertig geladen, der Seitenwechsel ist
+// dann sofort da. Ausgenommen: App-Buttons (rel=nofollow → /app leitet in den
+// Store weiter). Auch in der Startseite eingesetzt (ssr.ts → homePage).
+export const SPECULATION = `<script type="speculationrules">${JSON.stringify({
+  prerender: [{
+    where: {and: [{href_matches: "/*"}, {not: {selector_matches: "[rel~=nofollow]"}}]},
+    eagerness: "moderate",
+  }],
+})}</script>`;
+
 // ── Layout ───────────────────────────────────────────────────────────────────
 
 interface LayoutOpts {
@@ -446,6 +457,7 @@ ${o.preload ? `<link rel="preload" as="image" href="${o.preload}-640.jpg" media=
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=optional" media="print" onload="this.media='all'">
 <style>${SEO_CSS}</style>
+${SPECULATION}
 ${(o.jsonLd ?? []).map(jsonLd).join("\n")}
 </head>
 <body${o.appBar ? " class=\"has-bar\"" : ""}>

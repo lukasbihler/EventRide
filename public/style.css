@@ -1,5 +1,8 @@
 /* EventRide – Website Styles v3 (refined) */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Dunkles unteres Verlaufsende: blitzt am Handy durch, wenn beim Scrollen
+   noch nicht alles gezeichnet ist (sonst weiß). */
+html { background: #20367E; }
 
 .site {
   /* NAVY (default, matches app) */
@@ -38,9 +41,11 @@
 /* App-Verlauf (background_widget.dart) fest am Fenster wie auf den Event-Seiten:
    warm oben → blau unten, mit 50 % Schwarz abgedunkelt. Hellste Stelle
    #5C4E3C, Weiß darauf 7,8:1 (WCAG AA). Eigene Ebene, weil
-   background-attachment: fixed in iOS Safari nicht funktioniert. */
+   background-attachment: fixed in iOS Safari nicht funktioniert. Höhe = großer
+   Viewport, damit beim Ein-/Ausfahren der Adressleiste kein Streifen frei bleibt. */
 .site::before {
-  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  content: ''; position: fixed; top: 0; left: 0; right: 0; z-index: -1; pointer-events: none;
+  height: 100vh; height: 100lvh;
   background:
     linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)),
     linear-gradient(170deg, #B79B78 0%, #52A1EF 55%, #406CFB 100%);

@@ -8,23 +8,29 @@
 //
 // Hintergrund: App-Verlauf (background_widget.dart, warm oben → blau unten)
 // unter 45 % Schwarz. Hellste Stelle #B79B78 → #655542: Weiß darauf 6,6:1,
-// auf Glas (Weiß 12 %) 5,3:1 (WCAG AA). Diese Farbe steht auch als
-// html-Hintergrund, damit Lighthouse den ungünstigsten Fall prüft.
+// auf Glas (Weiß 12 %) 5,3:1 (WCAG AA). Der html-Hintergrund ist dagegen das
+// dunkle untere Verlaufsende: Er blitzt am Handy durch, wenn beim Scrollen noch
+// nicht alles gezeichnet ist (hell sah das wie ein brauner Balken aus).
+// Ungünstigsten Fall mit Lighthouse prüfen: html lokal auf #655542 setzen.
 //
 // Kopfbild (.head-bg): 35 % Deckkraft, brightness(.6). Ungünstigster Fall —
 // rein weißes Bildpixel über #655542 — Weiß darauf 5,1:1. Glas über dem Bild
-// (.glass-img, .eb, Pills) dunkelt per backdrop-filter auf 85 % ab: Weiß auf
-// Weiß-10-%-Glas 5,1:1 (ohne die Abdunklung wären es nur 4,1:1).
+// (.glass-img, Pills) dunkelt per backdrop-filter auf 85 % ab: Weiß auf
+// Weiß-10-%-Glas 5,1:1 (ohne die Abdunklung wären es nur 4,1:1). Die Glas-Boxen
+// (.eb) liegen unterhalb des Kopfbilds und brauchen das nicht.
 
 export const CARD_CSS = `
 /* ─── SEITENWECHSEL ───
    Filter und Karten führen auf eine neue Seite: Navigation bleibt stehen,
-   der Inhalt blendet kurz über (View Transitions, ohne JS). Browser ohne
-   Unterstützung laden normal. */
+   der Inhalt blendet weich über (View Transitions, ohne JS). Die Filterleiste
+   der Übersichtsseiten bleibt ebenfalls stehen (Name in SEO_CSS). Browser
+   ohne Unterstützung laden normal. */
 @media (prefers-reduced-motion: no-preference) {
   @view-transition { navigation: auto; }
   .nav { view-transition-name: nav; }
-  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+  ::view-transition-old(root), ::view-transition-new(root) {
+    animation-duration: .26s; animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+  }
 }
 
 /* ─── FILTER-PILLS (eine Zeile, am Handy scrollbar) ─── */
@@ -184,7 +190,7 @@ export const SEO_CSS = `
   --maxw:     1120px;
 }
 
-html { background: #655542; }
+html { background: #233B8A; }
 body {
   position: relative;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -194,9 +200,11 @@ body {
   min-height: 100vh;
 }
 /* Fester Hintergrund als eigene Ebene — background-attachment: fixed
-   funktioniert in iOS Safari nicht. */
+   funktioniert in iOS Safari nicht. Höhe = großer Viewport (100lvh), damit
+   beim Ein-/Ausfahren der Adressleiste unten kein Streifen frei bleibt. */
 body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1;
+  content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: -1;
+  height: 100vh; height: 100lvh;
   background:
     linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)),
     linear-gradient(170deg, #B79B78 0%, #52A1EF 55%, #406CFB 100%);
@@ -259,6 +267,10 @@ svg { fill: currentColor; }
 
 /* ─── SEITE ─── */
 main { position: relative; isolation: isolate; }
+/* Filterleiste bleibt beim Wechsel zwischen Übersichtsseiten stehen */
+@media (prefers-reduced-motion: no-preference) {
+  .filters { view-transition-name: filters; }
+}
 .page { max-width: var(--maxw); margin: 0 auto; padding: 16px 16px 40px; }
 
 /* Dezentes Kopfbild (Kategorie-/Themenseiten, Event-Seite): kein Bildbalken,
@@ -280,13 +292,14 @@ main { position: relative; isolation: isolate; }
 }
 .glass-img { background: rgba(255,255,255,.10); }
 
-/* Kompakte Glas-Boxen (Listen auf Kategorie- und Themenseiten) */
+/* Kompakte Glas-Boxen (Listen auf Kategorie- und Themenseiten). Ohne
+   backdrop-filter: über dem glatten Verlauf wäre die Unschärfe unsichtbar,
+   kostet am Handy aber bei jedem Scroll-Frame Rechenzeit (Ruckeln). */
 .eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .eb {
   display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 12px 14px 12px 12px;
   border-radius: 16px; color: #fff; text-decoration: none;
   background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
-  backdrop-filter: blur(14px) brightness(.85); -webkit-backdrop-filter: blur(14px) brightness(.85);
   box-shadow: 0 4px 14px rgba(0,0,0,.14);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
@@ -313,7 +326,7 @@ main { position: relative; isolation: isolate; }
 .eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-img, .eb, .has-head .pill { background: rgba(20,24,34,.35); }
+  .glass-img, .has-head .pill { background: rgba(20,24,34,.35); }
 }
 .crumbs { font-size: .78rem; color: var(--muted); margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
 .crumbs a { text-decoration: none; }

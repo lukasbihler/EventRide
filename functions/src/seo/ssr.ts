@@ -19,7 +19,7 @@ import {
   ALL_HUBS, BEZIRK_HUBS, Hub, THEMEN_HUBS, hubByPath, hubForBezirk, hubForTyp, wochenende,
 } from "./hubs";
 import {
-  CardEvent, FilterCtx, RelatedSection, SITE, appLink, renderEventPage, storeZiel, renderHomeParts, renderHubPage,
+  CardEvent, FilterCtx, RelatedSection, SITE, SPECULATION, appLink, renderEventPage, storeZiel, renderHomeParts, renderHubPage,
   renderNotFound, renderSitemap,
 } from "./render";
 import {isValidSlug} from "./slug";
@@ -251,6 +251,7 @@ async function homePage(req: Request, res: Response): Promise<void> {
   const teile = renderHomeParts(upcoming, filterCtx(site));
   const html = template
     .replace("</head>", () => `<style>${CARD_CSS}</style>
+${SPECULATION}
 </head>`)
     .replace("<!--seo:filter-->", teile.filter)
     .replace("<!--seo:events-->", teile.events);
