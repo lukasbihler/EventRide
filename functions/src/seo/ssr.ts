@@ -10,18 +10,20 @@
 import {onRequest} from "firebase-functions/v2/https";
 import type {Request, Response} from "express";
 import {brotliCompressSync, gzipSync} from "zlib";
+import * as QRCode from "qrcode";
 import {
-  EventPageDoc, LiveEvent, addDays, countFahrten, getEventPage, isPast, isRemovedPage,
+  EventPageDoc, LiveEvent, addDays, getEventPage, isPast, isRemovedPage,
   kategorie, loadEventPages, loadLiveEvents, todayVienna,
 } from "./data";
 import {
   ALL_HUBS, BEZIRK_HUBS, Hub, THEMEN_HUBS, hubByPath, hubForBezirk, hubForTyp, wochenende,
 } from "./hubs";
 import {
-  CardEvent, FilterCtx, RelatedSection, renderEventPage, renderHomeParts, renderHubPage,
+  CardEvent, FilterCtx, RelatedSection, SITE, appLink, renderEventPage, storeZiel, renderHomeParts, renderHubPage,
   renderNotFound, renderSitemap,
 } from "./render";
 import {isValidSlug} from "./slug";
+import {CARD_CSS} from "./styles";
 
 const CACHE_PAGE = "public, max-age=300, s-maxage=600";
 const CACHE_404 = "public, max-age=60, s-maxage=120";
@@ -146,10 +148,9 @@ async function eventPage(res: Response, slug: string): Promise<void> {
 
   if (next || series.length) {
     const ev = next ?? series[series.length - 1];
-    const fahrten = next ? await countFahrten(next.fahrtEventIds) : 0;
     sendHtml(res, 200, renderEventPage({
-      slug, ev, vorbei: !next, entfernt: false, fahrten,
-      related: relatedSections(site, slug, ev), hubs: site.aktiv,
+      slug, ev, vorbei: !next, entfernt: false, fahrten: next ? next.fahrten : 0,
+      related: relatedSections(site, slug, ev), hubs: site.aktiv, qr: await qrSvg(slug),
     }), CACHE_PAGE);
     return;
   }
@@ -163,8 +164,29 @@ async function eventPage(res: Response, slug: string): Promise<void> {
   const entfernt = isRemovedPage(page);
   sendHtml(res, 200, renderEventPage({
     slug, ev: page.snapshot, vorbei: !entfernt, entfernt, fahrten: 0,
-    related: relatedSections(site, slug, page.snapshot), hubs: site.aktiv,
+    related: relatedSections(site, slug, page.snapshot), hubs: site.aktiv, qr: await qrSvg(slug),
   }), CACHE_PAGE);
+}
+
+// QR-Code (SVG) für Desktop-Besucher, die die App am Handy holen wollen.
+// Zeigt auf /app, das je nach Gerät in den passenden Store weiterleitet.
+function qrSvg(slug: string): Promise<string> {
+  return QRCode.toString(SITE + appLink(`seo-${slug}`, "qr"), {
+    type: "svg", margin: 0, errorCorrectionLevel: "M",
+    color: {dark: "#1A2030", light: "#ffffff"},
+  });
+}
+
+// /app?c={kampagne}&m={medium}: Weiterleitung in den Store (iPhone/Android),
+// alle anderen Geräte landen im Download-Bereich der Startseite.
+function appRedirect(req: Request, res: Response): void {
+  const c = String(req.query["c"] ?? "");
+  const m = String(req.query["m"] ?? "");
+  const campaign = /^[a-z0-9-]{1,80}$/.test(c) ? c : "app";
+  const medium = /^[a-z]{1,20}$/.test(m) ? m : "seo";
+  const ziel = storeZiel(String(req.headers["user-agent"] ?? ""), campaign, medium) ?? "/#download";
+  res.set("Cache-Control", "private, no-store").set("Vary", "User-Agent")
+    .set("X-Robots-Tag", "noindex").redirect(302, ziel);
 }
 
 async function hubPage(res: Response, hub: Hub): Promise<void> {
@@ -228,6 +250,8 @@ async function homePage(req: Request, res: Response): Promise<void> {
   const upcoming = site.all.filter((e) => e.slug && !isPast(e.endDay)).slice(0, HOME_EVENTS);
   const teile = renderHomeParts(upcoming, filterCtx(site));
   const html = template
+    .replace("</head>", () => `<style>${CARD_CSS}</style>
+</head>`)
     .replace("<!--seo:filter-->", teile.filter)
     .replace("<!--seo:events-->", teile.events);
   sendHtml(res, 200, html, CACHE_PAGE);
@@ -266,6 +290,10 @@ async function handle(req: Request, res: Response): Promise<void> {
         return;
       }
       await homePage(req, res);
+      return;
+    }
+    if (path === "/app") {
+      appRedirect(req, res);
       return;
     }
     if (path === "/sitemap.xml") {

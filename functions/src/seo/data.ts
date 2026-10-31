@@ -6,6 +6,7 @@
 
 import * as admin from "firebase-admin";
 import {getViennaOffsetHours} from "../time";
+import {BILDER} from "./bilder";
 
 export const EVENT_PAGES = "event_pages";
 const CACHE_MS = 5 * 60 * 1000;
@@ -41,6 +42,8 @@ export interface LiveEvent extends PublicEvent {
   // "Ich will hin" (interessentenCount). Nicht im Archiv-Snapshot, weil es sich
   // ständig ändert. Bei mehrtägigen Events das Maximum über die Tage.
   interessenten: number;
+  // Angebotene Fahrten über alle Tage des Events.
+  fahrten: number;
 }
 
 export interface EventPageDoc {
@@ -172,7 +175,16 @@ let cache: { at: number; events: LiveEvent[] } | null = null;
 export async function loadLiveEvents(): Promise<LiveEvent[]> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.events;
 
-  const snap = await db().collection("events").get();
+  const [snap, fahrten] = await Promise.all([
+    db().collection("events").get(),
+    db().collection("fahrten").select("eventId").get(),
+  ]);
+  const fahrtenProEvent = new Map<string, number>();
+  for (const f of fahrten.docs) {
+    const id = str(f.get("eventId"));
+    if (id) fahrtenProEvent.set(id, (fahrtenProEvent.get(id) ?? 0) + 1);
+  }
+
   const children = new Map<string, { id: string; day: string; interessenten: number }[]>();
   const docs: admin.firestore.QueryDocumentSnapshot[] = [];
 
@@ -196,9 +208,11 @@ export async function loadLiveEvents(): Promise<LiveEvent[]> {
     const kids = children.get(doc.id) ?? [];
     const ev = toPublicEvent(doc.id, doc.data(), kids.map((k) => k.day));
     if (!ev) continue;
+    const fahrtEventIds = [doc.id, ...kids.map((k) => k.id)];
     events.push({
       ...ev,
-      fahrtEventIds: [doc.id, ...kids.map((k) => k.id)],
+      fahrtEventIds,
+      fahrten: fahrtEventIds.reduce((sum, id) => sum + (fahrtenProEvent.get(id) ?? 0), 0),
       interessenten: Math.max(zahl(doc.data()["interessentenCount"]), ...kids.map((k) => k.interessenten)),
     });
   }
@@ -206,16 +220,6 @@ export async function loadLiveEvents(): Promise<LiveEvent[]> {
 
   cache = {at: Date.now(), events};
   return events;
-}
-
-export async function countFahrten(eventIds: string[]): Promise<number> {
-  let total = 0;
-  for (let i = 0; i < eventIds.length; i += 30) {
-    const chunk = eventIds.slice(i, i + 30);
-    const agg = await db().collection("fahrten").where("eventId", "in", chunk).count().get();
-    total += agg.data().count;
-  }
-  return total;
 }
 
 export async function getEventPage(slug: string): Promise<EventPageDoc | null> {
@@ -265,4 +269,18 @@ const KATEGORIEN: Record<string, Kategorie> = {
 
 export function kategorie(typ: string): Kategorie {
   return KATEGORIEN[typ] ?? KATEGORIEN["e0"];
+}
+
+// Bildvariante einer Kategorie, stabil pro Slug (FNV-1a-Hash): gleiches Event
+// = gleiches Bild, verschiedene Events derselben Kategorie wirken nicht gleich.
+// Liefert den Pfad ohne Endung: + ".jpg" (1200x630) bzw. + "-640.jpg" (640x360).
+export function bildPfad(img: string, slug: string | null | undefined): string {
+  const n = BILDER[img] ?? 0;
+  if (n <= 0) return `/assets/og/${img}`;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < (slug ?? "").length; i++) {
+    h ^= (slug as string).charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `/assets/image/${img}/${(h % n) + 1}`;
 }

@@ -22,6 +22,7 @@
     "rewrites": [
       { "source": "/", "function": { "functionId": "seo", "region": "us-central1" } },
       { "source": "/index.html", "function": { "functionId": "seo", "region": "us-central1" } },
+      { "source": "/app", "function": { "functionId": "seo", "region": "us-central1" } },
       { "source": "/event/**", "function": { "functionId": "seo", "region": "us-central1" } },
       { "regex": "^/(events-[a-z-]+|[a-z-]+-kaernten)/?$", "function": { "functionId": "seo", "region": "us-central1" } },
       { "source": "/sitemap.xml", "function": { "functionId": "seo", "region": "us-central1" } }

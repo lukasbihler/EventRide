@@ -238,3 +238,17 @@ Umgesetzt laut Auftrag 2b, nur auf dem Vorschaukanal:
 - **Startseite Performance:** Fonts nicht blockierend, Hero-Text/-Handys ohne opacity-Animation (LCP), Screenshot 504 px + fetchpriority, `topo.png` (1,5 MB) → `topo.jpg` (37 KB), `favicon-192.png` statt 916-KB-Favicon, kleine Logos.
 - **Strukturdaten:** kein `endDate` bei eintägigen Events (mehrtägig: letzter Tag), Adresse in `streetAddress`/`postalCode`/`addressLocality`, `location.name` = Veranstaltungsort (`standort`), sonst Gemeinde.
 - **Abnahme Vorschau (Lighthouse Mobile):** Event-Seite, `/events-kaernten`, `/partys-kaernten`, `/wochenende-kaernten` 93–100 / 100 / 100. Startseite 100/100/100 bei warmem CDN-Cache, 77–81 Performance bei Cache-MISS (Function holt Vorlage); alte Startseite: 64. SEO 69 überall nur wegen Vorschau-noindex. Leak-Test 85 URLs: nur der bekannte Ticket-Link.
+
+## Schritt 2c (31.10.2026): Design-Überarbeitung
+
+Nur Vorschaukanal (`seoNext`), live erst nach OK. URLs, SEO-Struktur und Strukturdaten unverändert (Event-Bild jetzt die Variante unter `/assets/image/…`).
+
+- **Überall:** App-Verlauf fest am Fenster (auch Startseite inkl. Hero, `.site::before`), gleiche Navigation wie die Startseite (SEO-Seiten: Mobilmenü als `<details>`), Inhaltsbreite 1120 px, Karten-Hover (3 px anheben, orangener Schatten, Bild-Zoom) nur bei `hover: hover` und gleich bei `:focus-visible`.
+- **Eventkarten** (`CARD_CSS`, auch in die Startseite eingesetzt): ab 640 px Poster (Bild 16:9, Datums-Plakette, Chip nur gemischt, Glas mit Titel 2 Zeilen, Uhrzeit, Ort, Fußzeile „n Fahrten · m wollen hin“), am Handy App-Karte mit 2-zeiligem Titel. Grid 1/2/3 Spalten (640/1024).
+- **Tagesgruppen** „Heute“, „Morgen“, „Samstag, 31. Oktober“ (Wiener Zeit) mit Anzahl, am Desktop sticky; innerhalb eines Tages nach Uhrzeit sortiert, Karte zeigt nur die Uhrzeit.
+- **Fahrten pro Event** aus einer einzigen `fahrten`-Abfrage (`select("eventId")`, 5-min-Memo) statt einer Zählung pro Seite.
+- **Bildvarianten:** `public/assets/image/{kategorie}/{n}.jpg` (1200×630) und `{n}-640.jpg` (640×360), Auswahl per FNV-Hash des Slugs. Neue Bilder in `public/assets/image/{kategorie}/neu/` legen, dann `powershell -ExecutionPolicy Bypass -File scripts/seo_bilder.ps1` (erzeugt Varianten, schreibt `functions/src/seo/bilder.ts`, verschiebt Originale nach `seo_bilder_original/`, nicht im Git) und Function neu deployen.
+- **Filter:** eine Zeile, am Handy horizontal scrollbar (Dropdowns hängen am äußeren Wrapper, damit sie nicht abgeschnitten werden).
+- **Event-Seite:** Glasfläche mit Header-Bild (Handy 160 px, ab 640 px 21:9), Chip/Titel/Gemeinde, Info-Kacheln Wann/Wo/Eintritt/Veranstalter/Infos (leere entfallen, „Beginn ab …“ in der Beschreibung entfällt, wenn gleich der Uhrzeit). Ab 1024 px rechte Spalte „Mitfahren“ (sticky) mit Zahlen, Buttons, QR-Code, Store-Badges. Handy: fixe Leiste (≤ 64 px), Store-Badges klein am Seitenende.
+- **Neue Route `/app?c=…&m=…`:** 302 je nach User-Agent in App Store (ct) bzw. Play Store (utm_medium), sonst `/#download`; `private, no-store`, `noindex`. QR-Code (Paket `qrcode`, SVG serverseitig) zeigt auf `https://www.eventride.at/app?c=seo-{slug}&m=qr` – funktioniert erst nach der DNS-Umstellung. App-Buttons verlinken ebenfalls auf `/app` (kein JS mehr nötig).
+- **Abnahme Vorschau (Lighthouse Mobile):** Startseite 94/100/100, Event-Seiten 94–97/100/100, Übersichten 100/100/100, CLS ≤ 0,008. JSON-LD gültig. SEO 69 nur wegen Vorschau-noindex.

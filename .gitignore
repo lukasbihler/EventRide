@@ -60,3 +60,6 @@ app.*.map.json
 
 # temporär von scripts/deploy_seo_preview.sh
 firebase.preview.json
+
+# Originale der SEO-Bildvarianten (scripts/seo_bilder.ps1)
+seo_bilder_original/
