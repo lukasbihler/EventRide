@@ -2,6 +2,7 @@
 
 **Ziel:** eventride.at wird bei Google für Event-Namen und Kategorien in Kärnten gefunden (serverseitig gerenderte Seiten aus Firestore).
 **Deadline:** Schritt 1 live auf eventride.at bis **2026-11-04** (erster Krampuslauf am 2026-11-06).
+> Jarvis 31.10.: Frist weich – Lukas will bis 04.11. live, aber Höfler und Lithophanie haben Vorrang; EventRide nachrangig.
 **Branch:** `feature/seo-event-pages` · Details, Entscheidungen und Abnahmen: [docs/seo-plan.md](../docs/seo-plan.md)
 
 ## Schritt 0 – Analyse
@@ -23,6 +24,7 @@
 - [x] Übersichtsseiten Kategorien, Themen, Bezirke, Wochenende (2026-10-30)
 - [x] Startseite serverseitig (`public/home.html`) (2026-10-30)
 - [x] Design 2b/2c/2d: Karten, Glas-Boxen, Kopfbilder, Filter, View Transitions (2026-10-31)
+  > Jarvis 31.10.: Abnahme begonnen, Lukas hat noch einige Designänderungen.
 - [x] CLS-Fix Poppins-Ersatzschrift (2026-10-31)
 - [ ] Design final abnehmen (Nutzer: „wird immer besser, noch nicht final“)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
@@ -39,6 +41,7 @@
 - [ ] Sitemap in der Google Search Console einreichen
 
 ## Schritt 3 – später
+- [ ] Nach dem Livegang: Schutz gegen automatisches Abgreifen der Event-Daten (Scraping durch andere Apps/Seiten) prüfen und ggf. umsetzen
 - [ ] `/eintragen`-Formular ins bestehende Review-Gate
 - [ ] Universal Links / App Links für `/event/…`
 - [ ] Flyer-Upload (nur von Veranstaltern gelieferte oder freigegebene Flyer)

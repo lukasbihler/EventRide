@@ -9,8 +9,10 @@
 - [x] PITFALLS.md, CONVENTIONS.md, CLAUDE.md fürs neue Repo (2026-10-07)
 
 ## Offen
-- [ ] Mit dem Steuerberater klären: Pauschalierung, BMD-Spezifikation, Aufbewahrung
-- [ ] Neues Flutter- und Firebase-Projekt anlegen (EU-Region)
-- [ ] `hof_manager_docs/` übernehmen: CLAUDE.md ins Root, PITFALLS.md + CONVENTIONS.md nach `docs/`
-- [ ] Design-Mockups in den Workspace legen
-- [ ] MVP nach der Baureihenfolge aus der Analyse umsetzen
+> Jarvis 31.10.: Plan fällt weg – Höfler wird in plattform_app gebaut (Lukas).
+
+- ~~[ ] Mit dem Steuerberater klären: Pauschalierung, BMD-Spezifikation, Aufbewahrung~~ (verworfen 31.10.2026, Lukas)
+- ~~[ ] Neues Flutter- und Firebase-Projekt anlegen (EU-Region)~~ (verworfen 31.10.2026, Lukas)
+- ~~[ ] `hof_manager_docs/` übernehmen: CLAUDE.md ins Root, PITFALLS.md + CONVENTIONS.md nach `docs/`~~ (verworfen 31.10.2026, Lukas)
+- ~~[ ] Design-Mockups in den Workspace legen~~ (verworfen 31.10.2026, Lukas)
+- ~~[ ] MVP nach der Baureihenfolge aus der Analyse umsetzen~~ (verworfen 31.10.2026, Lukas)
