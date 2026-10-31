@@ -17,6 +17,16 @@
 // Weiß-10-%-Glas 5,1:1 (ohne die Abdunklung wären es nur 4,1:1).
 
 export const CARD_CSS = `
+/* ─── SEITENWECHSEL ───
+   Filter und Karten führen auf eine neue Seite: Navigation bleibt stehen,
+   der Inhalt blendet kurz über (View Transitions, ohne JS). Browser ohne
+   Unterstützung laden normal. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  .nav { view-transition-name: nav; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+}
+
 /* ─── FILTER-PILLS (eine Zeile, am Handy scrollbar) ─── */
 .filters { position: relative; z-index: 5; margin-bottom: 18px; }
 .filters-row {

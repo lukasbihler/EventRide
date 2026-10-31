@@ -269,7 +269,7 @@ function dropdown(label: string, hubs: Hub[], current: string): string {
   return `<details class="pill-dd">
   <summary class="pill${aktiv ? " on" : ""}">${esc(aktiv ? aktiv.chip : label)}${icon(P_DROP)}</summary>
   <div class="dd">${hubs.map((h) =>
-    `<a href="${h.path}#events"${h.path === current ? " aria-current=\"page\"" : ""}>${esc(h.chip)}</a>`
+    `<a href="${h.path}"${h.path === current ? " aria-current=\"page\"" : ""}>${esc(h.chip)}</a>`
   ).join("")}</div>
 </details>`;
 }
@@ -277,10 +277,13 @@ function dropdown(label: string, hubs: Hub[], current: string): string {
 // Eine Zeile, am Handy horizontal scrollbar. Die Dropdowns hängen am äußeren
 // Wrapper (nicht am Scroll-Container), damit sie nicht abgeschnitten werden.
 // Links stehen immer im HTML (auch zugeklappt) — wichtig für Crawler.
+// Bewusst ohne #events: der Sprung zum Anker schob Filter und erste Events
+// unter die fixe Navigation. Die Zielseite startet oben, Filter und erste
+// Events sind dort ohnehin sichtbar.
 export function filterBar(current: string, f: FilterCtx): string {
   const mitInhalt = (h: Hub) => f.aktiv.has(h.path) || h.path === current;
   return `<nav class="filters" aria-label="Events filtern"><div class="filters-row">
-  <a class="pill${current === ALLE.path ? " on" : ""}" href="${ALLE.path}#events">Alle</a>
+  <a class="pill${current === ALLE.path ? " on" : ""}" href="${ALLE.path}">Alle</a>
   ${dropdown("Typ", KATEGORIE_HUBS.filter(mitInhalt), current)}
   ${dropdown("Datum", [WOCHENENDE, ...f.themen].filter(mitInhalt), current)}
   ${dropdown("Bezirk", f.bezirke.filter(mitInhalt), current)}
