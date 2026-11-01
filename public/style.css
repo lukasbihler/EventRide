@@ -237,6 +237,25 @@
 }
 .sec-aside:hover { color: var(--orange); }
 .sec-aside svg { width: 15px; height: 15px; }
+/* TEST-SCHALTER Glas dunkel/hell (Startseite, "Was geht in Kärnten?") –
+   nach der Entscheidung entfernen. "Hell" = Kartenglas vom Stand 2d vor dem
+   Feinschliff. Wirkt nur ab 640 px, am Handy sind die Karten Bildkarten. */
+.glass-test { display: none; }
+@media (min-width: 640px) {
+  .glass-test { display: inline-flex; gap: 4px; padding: 4px; border-radius: 100px; background: rgba(255,255,255,.08); border: 1px solid var(--border-2); }
+  .glass-test button {
+    font: 600 14px/20px 'Poppins', sans-serif; color: var(--muted); background: none; border: 0;
+    padding: 6px 16px; border-radius: 100px; cursor: pointer;
+  }
+  .glass-test button[aria-pressed="true"] { background: var(--orange); color: var(--ink); }
+  .glas-hell .pc { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.16); }
+  .glas-hell .pc-date, .glas-hell .pc-chip {
+    background: rgba(20,24,34,.6); border-color: rgba(255,255,255,.25);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .glas-hell .pc-chip { border-color: rgba(255,255,255,.28); }
+  .glas-hell .pc-foot { border-top-color: rgba(255,255,255,.16); }
+}
 .sec-head.center { text-align: center; }
 .sec-head.center .eyebrow { justify-content: center; }
 .sec-head.center .eyebrow::before { display: none; }

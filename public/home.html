@@ -95,6 +95,11 @@
           <h2 class="sec-title">Was geht in Kärnten?</h2>
           <p class="sec-sub">Die nächsten Events, zu denen du mitfahren kannst – direkt aus der App.</p>
         </div>
+        <!-- TEST-SCHALTER Glas dunkel/hell – nach der Entscheidung entfernen -->
+        <div class="glass-test" role="group" aria-label="Kartendesign testen">
+          <button type="button" data-glas="dunkel" aria-pressed="true">Dunkel</button>
+          <button type="button" data-glas="hell" aria-pressed="false">Hell</button>
+        </div>
       </div>
       <!--seo:filter-->
       <div class="ev-list"><!--seo:events--></div>
@@ -258,6 +263,17 @@
   var progress = document.getElementById('progress');
   var phones = document.getElementById('phones');
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // TEST-SCHALTER Glas dunkel/hell – nach der Entscheidung entfernen
+  var evSec = document.getElementById('events');
+  document.querySelectorAll('.glass-test button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      evSec.classList.toggle('glas-hell', b.dataset.glas === 'hell');
+      document.querySelectorAll('.glass-test button').forEach(function (x) {
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+    });
+  });
 
   // burger menu
   document.getElementById('burger').addEventListener('click', function () {
