@@ -254,7 +254,8 @@ async function homePage(req: Request, res: Response): Promise<void> {
 ${SPECULATION}
 </head>`)
     .replace("<!--seo:filter-->", teile.filter)
-    .replace("<!--seo:events-->", teile.events);
+    .replace("<!--seo:events-->", teile.events)
+    .replace("<!--seo:footer-->", teile.footer);
   sendHtml(res, 200, html, CACHE_PAGE);
 }
 

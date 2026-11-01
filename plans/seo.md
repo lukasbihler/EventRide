@@ -26,6 +26,7 @@
 - [x] Design 2b/2c/2d: Karten, Glas-Boxen, Kopfbilder, Filter, View Transitions (2026-10-31)
   > Jarvis 31.10.: Abnahme begonnen, Lukas hat noch einige Designänderungen.
 - [x] CLS-Fix Poppins-Ersatzschrift (2026-10-31)
+- [x] Design 2d-Feinschliff: Poster-Text, Detailseite mit Fakten-Leiste + Beschreibung, Schärfe DPR 1, Download-Bereich, Footer (2026-11-01, nur Vorschau)
 - [ ] Design final abnehmen (Nutzer: „wird immer besser, noch nicht final“)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
 - [ ] Startseiten-Performance: Hero-Screenshot als LCP (Lighthouse 81–88)

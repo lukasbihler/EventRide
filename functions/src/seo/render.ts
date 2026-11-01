@@ -7,9 +7,11 @@
 // - Gemischte Listen (Startseite, Alle, Bezirke, Wochenende, "Weitere Events"):
 //   Poster-Karten — am Desktop Bild oben, Glas darunter, am Handy wie
 //   eventcard_widget.dart der App (gleiches Markup, das CSS schaltet um).
-// Event-Seite: Glasfläche mit Info-Kacheln, rechts eine Mitfahren-Spalte.
+// Event-Seite: Glasfläche mit Kopf, Fakten-Leiste (Datum, Adresse, Eintritt)
+// und Beschreibung, rechts eine Mitfahren-Spalte. Blöcke darunter mit lauter
+// gleichen Kategorien als Glas-Boxen, gemischte als Poster-Karten.
 
-import {LiveEvent, PublicEvent, Snapshot, isoStart, kategorie, addDays} from "./data";
+import {LiveEvent, PublicEvent, Snapshot, isoStart, kategorie, addDays, todayVienna} from "./data";
 import {ALLE, BEZIRK_HUBS, Hub, KATEGORIE_HUBS, WOCHENENDE, hubBild, hubForBezirk, hubForTyp, pickImage} from "./hubs";
 import {SEO_CSS} from "./styles";
 
@@ -87,13 +89,11 @@ function datumBereich(ev: Pick<PublicEvent, "startDay" | "endDay">): string {
   return `${datumLang(ev.startDay)} – ${datumLang(ev.endDay)}`;
 }
 
-// "Fr, 13. Nov. 2026" bzw. "Fr, 6. – So, 8. Nov. 2026" (Kachel "Wann").
-function datumMittel(ev: Pick<PublicEvent, "startDay" | "endDay">): string {
-  const a = parts(ev.startDay);
-  const b = parts(ev.endDay);
-  if (ev.startDay === ev.endDay) return `${WT[a.wd]}, ${a.d}. ${MON_KURZ[a.m - 1]} ${a.y}`;
-  if (a.y === b.y && a.m === b.m) return `${WT[a.wd]}, ${a.d}. – ${WT[b.wd]}, ${b.d}. ${MON_KURZ[b.m - 1]} ${b.y}`;
-  return `${WT[a.wd]}, ${a.d}. ${MON_KURZ[a.m - 1]} – ${WT[b.wd]}, ${b.d}. ${MON_KURZ[b.m - 1]} ${b.y}`;
+// Kalender-Plakette wie auf den Poster-Karten: "FR / 13 / NOV" (Jahr nur, wenn
+// es nicht das laufende ist).
+function plakette(day: string, mitJahr = false): string {
+  const p = parts(day);
+  return `<small>${WT[p.wd].toUpperCase()}</small><b>${p.d}</b><small>${MON_PLAKETTE[p.m - 1]}${mitJahr ? ` ${p.y}` : ""}</small>`;
 }
 
 // Kartenformat wie in der App: "Sa. 31.10." (vergangene Termine mit Jahr).
@@ -180,6 +180,47 @@ function bereinigteBeschreibung(ev: PageEvent): string {
   }).join("\n\n");
 }
 
+// Altersangabe in der letzten Zeile ("Eintritt ab 16 Jahren!", "Einlass ab 16.",
+// "Einlass ausnahmslos ab 16 Jahren!") → Badge im Kopf, Zeile entfällt im Text.
+const ALTER_RE = /^(?:(?:eintritt|einlass|zutritt)\s+)?(?:nur\s+|ausnahmslos\s+)?ab\s*(\d{1,2})(?:\s*jahren)?\s*[.!]*$/i;
+
+function alterAbtrennen(text: string): { text: string; alter: number | null } {
+  const zeilen = text.trimEnd().split("\n");
+  const m = (zeilen[zeilen.length - 1] ?? "").trim().match(ALTER_RE);
+  const alter = m ? Number(m[1]) : 0;
+  if (alter < 6 || alter > 21) return {text, alter: null};
+  return {text: zeilen.slice(0, -1).join("\n").trimEnd(), alter};
+}
+
+// Feld "eintritt" → Zeilen "Label | Betrag" plus Links. Formate aus dem
+// Manager: "VVK: 10 € (https://…)\nAK: 12", "AK 10", "Tickets unter: https://…",
+// "frei", "WhatsApp-Kanal-Abonnenten 3 € bis 22:30 Uhr (https://…)".
+interface Preiszeile { label: string; wert: string }
+
+function eintrittTeile(text: string): { zeilen: Preiszeile[]; links: string[] } {
+  const zeilen: Preiszeile[] = [];
+  const links: string[] = [];
+  for (const roh of text.split("\n")) {
+    const zeile = roh.replace(/\b(?:https?:\/\/|www\.)[^\s()<>]+/gi, (url) => {
+      const sauber = url.replace(/[.,;:!?]+$/, "");
+      const href = sauber.startsWith("www.") ? `https://${sauber}` : sauber;
+      if (!links.includes(href)) links.push(href);
+      return "";
+    })
+      .replace(/\(\s*(?:[^()]*:)?\s*\)/g, "") // übrig nach dem Link: "()", "(Whatsapp-Kanal: )"
+      .replace(/\s+/g, " ").trim();
+    if (!zeile) continue;
+    const mitDoppelpunkt = zeile.match(/^([^:\d]{1,30}):\s*(.*)$/);
+    const ohne = zeile.match(/^([A-Za-zÄÖÜäöü][A-Za-zÄÖÜäöü .-]{0,20}?)\s+(\d+(?:[.,]\d{1,2})?\s*€?)$/);
+    const [label, wert] = mitDoppelpunkt ? [mitDoppelpunkt[1].trim(), mitDoppelpunkt[2].trim()] :
+      ohne ? [ohne[1].trim(), ohne[2]] : ["", zeile];
+    if (!wert) continue; // "Tickets unter:" — der Link wird zum Button
+    const betrag = /^\d+(?:[.,]\d{1,2})?$/.test(wert) ? `${wert} €` : wert.replace(/(\d)€/g, "$1 €");
+    zeilen.push({label, wert: betrag});
+  }
+  return {zeilen, links};
+}
+
 function kurz(text: string, max: number): string {
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= max) return t;
@@ -206,9 +247,7 @@ const P_FWD = "M6.23 20.23 8 22l10-10L8 2 6.23 3.77 14.46 12z";
 const P_CAR = "M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z";
 const P_SEARCH = "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z";
 const P_TICKET = "M22 10V6c0-1.11-.9-2-2-2H4c-1.1 0-1.99.89-1.99 2v4c1.1 0 1.99.9 1.99 2s-.89 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.46c-1.19.69-2 1.99-2 3.46s.81 2.77 2 3.46V18H4v-2.54c1.19-.69 2-1.99 2-3.46 0-1.48-.8-2.77-1.99-3.46L4 6h16v2.54zM11 15h2v2h-2zm0-4h2v2h-2zm0-4h2v2h-2z";
-const P_PERSON = "M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z";
 const P_DROP = "M7 10l5 5 5-5z";
-const P_INFO = "M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z";
 
 const ICON_APPLE = "<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M17.05 12.54c-.02-2.2 1.8-3.25 1.88-3.3-1.02-1.5-2.62-1.7-3.18-1.72-1.35-.14-2.64.79-3.32.79-.69 0-1.74-.77-2.86-.75-1.47.02-2.83.85-3.58 2.17-1.53 2.65-.39 6.57 1.1 8.72.73 1.05 1.6 2.23 2.73 2.19 1.1-.04 1.52-.71 2.85-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.49zM14.88 5.96c.6-.74 1.01-1.76.9-2.78-.87.04-1.93.58-2.56 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.97-.49 2.58-1.21z\"></path></svg>";
 const ICON_PLAY = "<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\"><path fill=\"#5DA9FF\" d=\"M3.6 2.3c-.2.2-.32.53-.32.95v17.5c0 .42.12.75.33.95l.06.05L13.4 12v-.1L3.66 2.25l-.06.05z\"></path><path fill=\"#2FC69E\" d=\"M16.7 15.3 13.4 12v-.1l3.3-3.3.08.05 3.9 2.22c1.12.63 1.12 1.67 0 2.31l-3.9 2.21-.08.05z\"></path><path fill=\"#FF9A3C\" d=\"M16.78 15.25 13.4 11.9 3.6 21.7c.37.39.98.44 1.67.05l11.5-6.5z\"></path><path fill=\"#F5873A\" d=\"M16.78 8.6 5.27 2.1c-.69-.39-1.3-.34-1.67.05l9.8 9.75 3.38-3.3z\"></path></svg>";
@@ -331,19 +370,25 @@ export function eventCard(ev: CardEvent, o: CardOpts = {}): string {
 </a>`;
 }
 
-// Kompakte Glas-Box (Kategorie-/Themenseiten): Plakette mit der Uhrzeit (das
-// Datum steht in der Tages-Überschrift), bei vergangenen Terminen mit dem Datum.
+// Kompakte Glas-Box. In Tagesgruppen (Kategorie-/Themenseiten) Plakette mit der
+// Uhrzeit — das Datum steht in der Tages-Überschrift. Ohne Tagesgruppe (Blöcke
+// auf der Event-Seite) Plakette mit dem Datum, die Uhrzeit als eigene Zeile.
+// Vergangene Termine: Tag, Monat und Jahr.
 export function eventBox(ev: CardEvent, o: CardOpts = {}): string {
   const p = parts(ev.startDay);
-  const plakette = o.past ?
+  const mitDatum = !o.past && !o.nurZeit;
+  const plak = o.past ?
     `<b>${p.d}</b><small>${MON_PLAKETTE[p.m - 1]} ${p.y}</small>` :
-    `${icon(P_DATE, "i-amber")}${ev.uhrzeit ? `<b>${esc(ev.uhrzeit)}</b>` : "<small>Zeit offen</small>"}`;
+    mitDatum ? plakette(ev.startDay) :
+      `${icon(P_DATE, "i-amber")}${ev.uhrzeit ? `<b>${esc(ev.uhrzeit)}</b>` : "<small>Zeit offen</small>"}`;
   const zahlen = o.past ? "" : zahlenZeile(ev.fahrten ?? 0, ev.interessenten ?? 0);
-  return `<a class="eb${o.past ? " eb-past" : ""}" href="/event/${esc(ev.slug)}">
-  <span class="eb-plak">${plakette}</span>
+  const zeit = mitDatum && ev.uhrzeit ?
+    `<span class="eb-row">${icon(P_TIME, "i-amber")}<span>${esc(ev.uhrzeit)} Uhr</span></span>` : "";
+  return `<a class="eb${o.past ? " eb-past" : mitDatum ? " eb-dat" : ""}" href="/event/${esc(ev.slug)}">
+  <span class="eb-plak">${plak}</span>
   <span class="eb-body">
     <h3 class="eb-name">${esc(ev.name)}</h3>
-    <span class="eb-row">${icon(P_PIN, "i-red")}<span>${esc(ev.gemeinde || "Kärnten")}</span></span>
+    ${zeit}<span class="eb-row">${icon(P_PIN, "i-red")}<span>${esc(ev.gemeinde || "Kärnten")}</span></span>
     ${zahlen ? `<span class="eb-zahlen">${esc(zahlen)}</span>` : ""}
   </span>
   ${icon(P_FWD, "eb-arrow")}
@@ -403,6 +448,12 @@ function footerLinks(hubs: Hub[], aktiv: Set<string>): string {
     .map((h) => `<a href="${h.path}">${esc(h.crumb)}</a>`).join("");
 }
 
+// Link-Spalten im Footer, auch in der Startseite eingesetzt (ssr.ts → homePage).
+export function footerSpalten(aktiv: Set<string>): string {
+  return `<nav aria-label="Kategorien"><strong>Events nach Kategorie</strong>${footerLinks([ALLE, WOCHENENDE, ...KATEGORIE_HUBS], aktiv)}</nav>
+      <nav aria-label="Bezirke"><strong>Events nach Bezirk</strong>${footerLinks(BEZIRK_HUBS, aktiv)}</nav>`;
+}
+
 // Gleiche Navigation wie die Startseite (public/home.html). Das Mobilmenü ist
 // ein <details>, damit es ohne JavaScript funktioniert.
 const NAV_LINKS: [string, string, string][] = [
@@ -455,7 +506,7 @@ ${o.noindex ? "<meta name=\"robots\" content=\"noindex\">" : `<link rel="canonic
 ${o.preload ? `<link rel="preload" as="image" href="${o.preload}-640.jpg" media="(max-width: 1023px)" fetchpriority="high">\n<link rel="preload" as="image" href="${o.preload}.jpg" media="(min-width: 1024px)" fetchpriority="high">` : ""}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&display=optional" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=optional" media="print" onload="this.media='all'">
 <style>${SEO_CSS}</style>
 ${SPECULATION}
 ${(o.jsonLd ?? []).map(jsonLd).join("\n")}
@@ -469,8 +520,7 @@ ${o.body}
   <div class="footer-inner">
     <div class="footer-l"><span class="fw">Event<span class="r">Ride</span></span><small>Mitfahrgelegenheiten zu Events in Kärnten</small></div>
     <div class="footer-cols">
-      <nav aria-label="Kategorien"><strong>Events nach Kategorie</strong>${footerLinks([ALLE, WOCHENENDE, ...KATEGORIE_HUBS], o.hubs)}</nav>
-      <nav aria-label="Bezirke"><strong>Events nach Bezirk</strong>${footerLinks(BEZIRK_HUBS, o.hubs)}</nav>
+      ${footerSpalten(o.hubs)}
       <nav aria-label="EventRide"><strong>EventRide</strong><a href="/">Startseite</a><a href="/datenschutz.html">Datenschutz</a><a href="/impressum.html">Impressum</a></nav>
     </div>
   </div>
@@ -498,8 +548,45 @@ export interface EventPageInput {
   qr: string; // SVG, zeigt auf /app
 }
 
-function kachel(cls: string, ic: string, label: string, wert: string): string {
-  return `<div class="tile ${cls}">${ic}<span class="lbl">${label}</span><div class="val">${wert}</div></div>`;
+function fakt(cls: string, label: string, inhalt: string): string {
+  return `<div class="fact ${cls}"><span class="lbl">${label}</span>${inhalt}</div>`;
+}
+
+// Kachel "Datum und Uhrzeit": Plakette + Wochentag + Uhrzeit. Mehrtägig:
+// Plakette des ersten Tags, "Freitag – Sonntag" und der Zeitraum darunter.
+function faktDatum(ev: PageEvent, heute: string): string {
+  const a = parts(ev.startDay);
+  const b = parts(ev.endDay);
+  const tage = ev.startDay === ev.endDay ? WOCHENTAGE[a.wd] : `${WOCHENTAGE[a.wd]} – ${WOCHENTAGE[b.wd]}`;
+  const bereich = ev.startDay === ev.endDay ? "" :
+    a.m === b.m ? `${a.d}.–${b.d}. ${MON_KURZ[b.m - 1]}` : `${a.d}. ${MON_KURZ[a.m - 1]} – ${b.d}. ${MON_KURZ[b.m - 1]}`;
+  return fakt("f-wann", "Datum und Uhrzeit", `<div class="f-date">
+    <span class="f-plak">${plakette(ev.startDay, jahr(ev.startDay) !== jahr(heute))}</span>
+    <span class="f-dtxt"><b class="f-val">${esc(tage)}</b>${bereich ? `<span>${esc(bereich)}</span>` : ""}${ev.uhrzeit ? `<b class="f-zeit">${esc(ev.uhrzeit)} Uhr</b>` : ""}</span>
+  </div>`);
+}
+
+// Kachel "Adresse": Veranstaltungsort (falls vorhanden), Straße, PLZ + Ort.
+function faktAdresse(ev: PageEvent, adr: ReturnType<typeof adressTeile>, maps: string | null): string {
+  const zeilen = [ev.ort, adr.strasse, [adr.plz, adr.ort].filter(Boolean).join(" ")].filter(Boolean);
+  if (zeilen.length === 0) zeilen.push(ev.gemeinde || "Kärnten");
+  const [erste, ...rest] = zeilen;
+  return fakt("f-wo", "Adresse", `<p class="f-val">${esc(erste)}</p>${rest.map((z) => `<p>${esc(z)}</p>`).join("")}` +
+    (maps ? `<a class="f-link" href="${esc(maps)}" target="_blank" rel="noopener">${icon(P_NAV)}Navigieren</a>` : ""));
+}
+
+// Kachel "Eintritt": Label links, Betrag rechts. Links werden zu Buttons
+// ("Tickets", beim WhatsApp-Kanal "WhatsApp-Kanal").
+function faktEintritt(text: string): string {
+  const {zeilen, links} = eintrittTeile(text);
+  const html = zeilen.map((z) => z.label ?
+    `<div class="preis"><span>${esc(z.label)}</span><b>${esc(z.wert)}</b></div>` :
+    z.wert.length <= 24 ? `<p class="f-val">${esc(z.wert)}</p>` : `<p>${esc(z.wert)}</p>`
+  ).join("");
+  const btns = links.map((href) =>
+    `<a class="f-btn" href="${esc(href)}" target="_blank" rel="nofollow noopener">${icon(P_TICKET)}${/whatsapp\.com/i.test(href) ? "WhatsApp-Kanal" : "Tickets"}</a>`
+  ).join("");
+  return fakt("f-eintritt", "Eintritt", `${html}${btns ? `<div class="f-btns">${btns}</div>` : ""}`);
 }
 
 export function renderEventPage(i: EventPageInput): string {
@@ -526,7 +613,7 @@ export function renderEventPage(i: EventPageInput): string {
   const crumbs = breadcrumbs(crumbItems);
 
   const image = SITE + bild + ".jpg";
-  const beschreibung = bereinigteBeschreibung(ev);
+  const {text: beschreibung, alter} = alterAbtrennen(bereinigteBeschreibung(ev));
   const aktiv = !i.vorbei && !i.entfernt;
   const campaign = `seo-${slug}`;
 
@@ -554,6 +641,7 @@ export function renderEventPage(i: EventPageInput): string {
     "image": [image],
     "description": kurz(beschreibung || description, 500),
     "url": SITE + path,
+    ...(alter ? {"typicalAgeRange": `${alter}-`} : {}),
   };
   if (ev.veranstalter) eventLd["organizer"] = {"@type": "Organization", "name": ev.veranstalter};
 
@@ -563,38 +651,40 @@ export function renderEventPage(i: EventPageInput): string {
       `<p class="notice">Dieser Termin ist vorbei. Sobald der nächste Termin von ${esc(ev.name)} feststeht, findest du ihn hier und in der EventRide App.</p>` :
       "";
 
-  // Kachel "Wo": Veranstaltungsort bzw. Adresse, darunter Gemeinde und Bezirk.
-  const ortHaupt = venue || adr.kurz || ev.gemeinde || "Kärnten";
+  // Kopfzeile unter dem Titel: Gemeinde · Bezirk · "n wollen hin". Die Zahl der
+  // Fahrten steht ab 1024 px in der Mitfahren-Spalte, darunter hier.
   const bezirkText = ev.bezirk && ev.bezirk !== ev.gemeinde ?
     (bezirkHub && i.hubs.has(bezirkHub.path) ?
       `<a href="${bezirkHub.path}">Bezirk ${esc(ev.bezirk)}</a>` :
-      `Bezirk ${esc(ev.bezirk)}`) :
+      `<span>Bezirk ${esc(ev.bezirk)}</span>`) :
     "";
-  const gemeindeFehlt = ev.gemeinde && !`${ortHaupt} ${adr.kurz}`.includes(ev.gemeinde);
-  const ortNeben = [
-    venue && adr.kurz ? esc(adr.kurz) : "",
-    gemeindeFehlt ? esc(ev.gemeinde) : "",
-    bezirkText,
-  ].filter(Boolean).join(" · ");
+  const interessenten = aktiv ? zahlenZeile(0, ev.interessenten ?? 0) : "";
+  const fahrten = aktiv ? zahlenZeile(i.fahrten, 0) : "";
+  // Trennpunkt mit &nbsp; vorne: bricht die Zeile um, bleibt er am Zeilenende.
+  const sep = "<span class=\"sep\" aria-hidden=\"true\">&nbsp;· </span>";
+  const meta = [
+    `<span>${esc(ev.gemeinde || "Kärnten")}</span>`,
+    bezirkText ? sep + bezirkText : "",
+    interessenten ? `${sep}<span>${esc(interessenten)}</span>` : "",
+    fahrten ? `<span class="m-fahrten">${sep}<span>${esc(fahrten)}</span></span>` : "",
+  ].join("");
   const maps = i.entfernt ? null : mapsLink(ev);
 
-  const tiles = [
-    kachel(`t-wann${ev.eintritt ? "" : " solo-m"}`, icon(P_DATE, "i-amber"), "Wann",
-      `<p>${esc(datumMittel(ev))}</p>${ev.uhrzeit ? `<p>${esc(ev.uhrzeit)} Uhr</p>` : ""}`),
-    kachel("t-wo", icon(P_PIN, "i-red"), "Wo",
-      `<p>${esc(ortHaupt)}</p>${ortNeben ? `<small>${ortNeben}</small>` : ""}` +
-      (maps ? `<a class="navlink" href="${esc(maps)}" target="_blank" rel="noopener">${icon(P_NAV)}Navigieren</a>` : "")),
-    ev.eintritt ? kachel(`t-eintritt${ev.veranstalter ? "" : " solo-d"}`, icon(P_TICKET, "i-amber"), "Eintritt",
-      `<p>${linkify(esc(ev.eintritt)).replace(/\n/g, "<br>")}</p>`) : "",
-    ev.veranstalter ? kachel(`t-veranst${ev.eintritt ? "" : " solo-d"}`, icon(P_PERSON, "i-soft"), "Veranstalter",
-      `<p>${esc(ev.veranstalter)}</p>`) : "",
-    beschreibung ? kachel("t-infos", icon(P_INFO, "i-soft"), "Infos", `<div class="desc">${absatz(beschreibung)}</div>`) : "",
+  const fakten = [
+    faktDatum(ev, todayVienna()),
+    faktAdresse(ev, adr, maps),
+    ev.eintritt ? faktEintritt(ev.eintritt) : "",
   ].join("");
 
   const zahlen = aktiv ? zahlenZeile(i.fahrten, ev.interessenten ?? 0) : "";
   const chip = typVerlinkt ?
     `<a class="ev-chip" href="${typHub.path}">${esc(k.label)}</a>` :
     `<span class="ev-chip">${esc(k.label)}</span>`;
+  const altersBadge = alter ? `<span class="ev-chip ev-age">ab ${alter} Jahren</span>` : "";
+  const text = beschreibung || ev.veranstalter ? `<section class="ev-desc">
+        ${beschreibung ? `<h2>Beschreibung</h2><div class="desc">${absatz(beschreibung)}</div>` : ""}
+        ${ev.veranstalter ? `<p class="ev-veranst">Veranstalter: <b>${esc(ev.veranstalter)}</b></p>` : ""}
+      </section>` : "";
 
   const seite = aktiv ? `<h2>Mitfahren</h2>
     <p class="side-zahlen">${zahlen ? esc(zahlen) : "Noch keine Fahrten eingetragen – biete als Erste:r Plätze an."}</p>
@@ -608,12 +698,12 @@ export function renderEventPage(i: EventPageInput): string {
   <div class="ev-layout">
     <article class="glass glass-img ev-main">
       <header class="ev-title">
-        ${chip}
+        <div class="ev-chips">${chip}${altersBadge}</div>
         <h1>${esc(ev.name)}</h1>
-        <p class="ev-gem">${icon(P_PIN, "i-red")}${esc(ev.gemeinde || "Kärnten")}</p>
-        ${zahlen ? `<p class="ev-zahlen">${esc(zahlen)}</p>` : ""}
+        <p class="ev-meta">${meta}</p>
       </header>
-      <div class="tiles">${tiles}</div>
+      <div class="facts">${fakten}</div>
+      ${text}
     </article>
     <aside class="ev-side" aria-label="Mitfahren">
       <div class="glass glass-img side">
@@ -623,7 +713,11 @@ export function renderEventPage(i: EventPageInput): string {
       </div>
     </aside>
   </div>
-  ${i.related.map((r) => cardSection(r.titel, r.events, {tag: r.more?.kind !== "typ", more: r.more})).join("\n")}
+  ${i.related.map((r) => cardSection(r.titel, r.events, {
+    tag: r.more?.kind !== "typ", more: r.more,
+    // Lauter gleiche Kategorien (= lauter gleiche Bilder) → kompakte Boxen
+    box: r.events.every((e) => e.typ === r.events[0]?.typ),
+  })).join("\n")}
   <div class="m-stores">${storeBadges(campaign)}</div>
 </div>
 ${aktiv ? appButtons(campaign, "app-bar") : ""}`;
@@ -765,9 +859,10 @@ export function renderHubPage(i: HubPageInput, heute: string): string {
 // ── Startseite: "Was geht in Kärnten?" ───────────────────────────────────────
 
 // Liefert die Bausteine, die in public/home.html an den Markern eingesetzt werden.
-export function renderHomeParts(upcoming: LiveEvent[], f: FilterCtx): { filter: string; events: string } {
+export function renderHomeParts(upcoming: LiveEvent[], f: FilterCtx): { filter: string; events: string; footer: string } {
   return {
     filter: filterBar("/", f),
+    footer: `<div class="footer-cols">${footerSpalten(f.aktiv)}</div>`,
     events: upcoming.length ?
       cardGrid(upcoming, {tag: true}) :
       "<p class=\"notice\">Gerade sind keine kommenden Events eingetragen – schau bald wieder vorbei.</p>",

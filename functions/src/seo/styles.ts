@@ -19,10 +19,15 @@
 // Weiß-10-%-Glas 5,1:1 (ohne die Abdunklung wären es nur 4,1:1). Die Glas-Boxen
 // (.eb) liegen unterhalb des Kopfbilds und brauchen das nicht.
 //
-// Schrift der Eventkarten: Poppins mit klarer Abstufung — Titel 600 (800 war
-// zu wuchtig), Uhrzeit 500, Ort 400, Zahlen klein. Gedimmt wird über Stärke und
-// Größe, nicht über die Farbe: Text bleibt bei 91 % Weiß (auf Glas 4,7:1;
-// 70 % wie in der App ergäbe nur 3,5:1). Die Startseite lädt dafür Poppins 400.
+// Schrift der Eventkarten: Poppins, Titel 18 px / 700, Uhrzeit und Ort 15 px /
+// 500 in 96 % Weiß. Abgestuft wird über Größe und Stärke, nicht über die Farbe.
+//
+// Schärfe auf Monitoren mit Gerätepixelverhältnis 1: nur ganze Pixel bei
+// Schrift, Abständen und Icons, Text unter 15 px mit mindestens 500, kein
+// transform im Ruhezustand. Chrome glättet Text nur dann mit Subpixeln, wenn
+// er auf deckendem Grund liegt — über dem festen Verlauf ist alles
+// durchsichtig. Karten und Glas-Boxen bekommen deshalb bei DPR < 2 einen
+// deckenden Hintergrund in der Mischfarbe, auf Retina bleibt das Glas.
 const CARD_FONT = "'Poppins', 'Poppins Fallback', 'Poppins Fallback Roboto', sans-serif";
 
 export const CARD_CSS = `
@@ -99,30 +104,29 @@ details[open] > .pill svg { transform: rotate(180deg); }
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(90deg, rgba(0,0,0,var(--l)) 0%, rgba(0,0,0,calc(var(--l) * .7)) 45%, rgba(0,0,0,0) 85%);
 }
-.d35 { --l: .7; }
-.d50 { --l: .76; }
-.d69 { --l: .84; }
+.d35 { --l: .76; }
+.d50 { --l: .8; }
+.d69 { --l: .86; }
 .pc-past .pc-img { filter: grayscale(.8); }
 .pc-date, .pc-chip { display: none; }
-.pc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 14px 40px 14px 18px; }
+.pc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 14px 40px 14px 18px; }
 /* .pc .pc-name schlägt ".site h3 { Poppins }" der Startseite */
 .pc .pc-name {
-  font-family: inherit; font-size: 1.12rem; font-weight: 600; line-height: 1.3; letter-spacing: 0;
+  font-family: inherit; font-size: 18px; font-weight: 700; line-height: 24px; letter-spacing: 0;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   text-shadow: 0 1px 6px rgba(0,0,0,.5);
 }
 .pc-row {
-  display: flex; align-items: center; gap: 6px; font-size: .92rem; font-weight: 400; min-width: 0;
-  color: rgba(255,255,255,.91); text-shadow: 0 1px 4px rgba(0,0,0,.6);
+  display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; line-height: 22px; min-width: 0;
+  color: rgba(255,255,255,.96); text-shadow: 0 1px 4px rgba(0,0,0,.6);
 }
-.pc-when { font-weight: 500; }
 .pc-row svg { width: 16px; height: 16px; flex-shrink: 0; fill: currentColor; }
 .pc-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pc .i-amber { color: #FFC107; }
 .pc .i-red { color: #FF5252; }
 .pc .d-only { display: none; }
 .pc-foot > span { display: none; }
-.pc-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: rgba(255,255,255,.8); }
+.pc-arrow { position: absolute; right: 14px; top: 0; bottom: 0; margin: auto 0; width: 16px; height: 16px; fill: rgba(255,255,255,.8); }
 
 /* Hover (Poster-Karten und Glas-Boxen .eb): 2 px anheben, weicher orangener
    Schatten, Rand leicht orange. Bei reduzierter Bewegung nur der Schatten. */
@@ -145,35 +149,34 @@ details[open] > .pill svg { transform: rotate(180deg); }
   .pc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .pc .m-only { display: none; }
   .pc .d-only { display: block; }
+  /* Textbereich dunkles Glas: Weiß 96 % darauf über der hellsten Verlaufsstelle 12:1 */
   .pc {
     flex-direction: column; min-height: 0; border-radius: 18px;
-    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
+    background: rgba(16,20,32,.58); border: 1px solid rgba(255,255,255,.2);
   }
   .pc-media { position: relative; inset: auto; z-index: 0; aspect-ratio: 16 / 9; margin: 8px 8px 0; border-radius: 13px; }
   .pc-media::after { display: none; }
   .pc-date {
     display: flex; flex-direction: column; align-items: center;
     position: absolute; top: 10px; left: 10px; z-index: 1; min-width: 50px; padding: 5px 8px 6px;
-    border-radius: 12px; line-height: 1.05; text-align: center;
-    background: rgba(20,24,34,.6); border: 1px solid rgba(255,255,255,.25);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 12px; line-height: 1.1; text-align: center;
+    background: rgba(20,24,34,.72); border: 1px solid rgba(255,255,255,.28);
   }
-  .pc-date small { font-size: .62rem; font-weight: 600; letter-spacing: .1em; }
-  .pc-date b { font-size: 1.35rem; font-weight: 600; }
+  .pc-date small { font-size: 10px; font-weight: 600; letter-spacing: 1px; }
+  .pc-date b { font-size: 22px; line-height: 24px; font-weight: 600; }
   .pc-chip {
     display: inline-block; position: absolute; top: 10px; right: 10px; z-index: 1;
-    font-size: .64rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
     padding: 3px 10px; border-radius: 20px;
-    background: rgba(20,24,34,.6); border: 1px solid rgba(255,255,255,.28);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    background: rgba(20,24,34,.72); border: 1px solid rgba(255,255,255,.3);
   }
-  .pc-body { justify-content: flex-start; padding: 12px 16px 12px; }
-  .pc .pc-name { font-size: 1.06rem; min-height: 2.6em; text-shadow: none; }
-  .pc-row { font-size: .88rem; text-shadow: none; }
+  .pc-body { justify-content: flex-start; padding: 16px 16px 12px; }
+  .pc .pc-name { min-height: 48px; margin-bottom: 2px; text-shadow: none; }
+  .pc-row { text-shadow: none; }
   .pc-foot {
-    margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.16);
+    margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.18);
     display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px;
-    font-size: .8rem; font-weight: 500; color: rgba(255,255,255,.91);
+    font-size: 13px; font-weight: 500; color: rgba(255,255,255,.94);
   }
   .pc-foot > span { display: inline; }
   .pc-arrow { position: static; transform: none; fill: #F5A04A; flex-shrink: 0; }
@@ -181,16 +184,21 @@ details[open] > .pill svg { transform: rotate(180deg); }
 @media (min-width: 1024px) {
   .pc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+/* DPR < 2: deckend statt Glas (Mischfarbe über der Verlaufsmitte), s. oben */
+@media (min-width: 640px) and (max-resolution: 1.99dppx) {
+  .pc { background: #1D2536; }
+}
 
 /* ─── TAGESGRUPPEN ─── */
 .day { margin-top: 22px; }
-.day-h { display: flex; align-items: baseline; gap: 10px; font-size: 1.12rem; font-weight: 800; margin-bottom: 12px; color: #fff; }
-.day-h span { font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.88); }
+.day-h { display: flex; align-items: baseline; gap: 10px; font-size: 18px; font-weight: 800; margin-bottom: 12px; color: #fff; }
+.day-h span { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.88); }
+/* Am Desktop sticky, fast deckend statt backdrop-filter */
 @media (min-width: 1024px) {
   .day-h {
     position: sticky; top: 66px; z-index: 3;
     margin: 0 -14px 12px; padding: 10px 14px; border-radius: 14px;
-    background: rgba(28,32,46,.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    background: rgba(28,32,46,.94);
   }
 }
 `;
@@ -300,7 +308,7 @@ main { position: relative; isolation: isolate; }
 /* Dezentes Kopfbild (Kategorie-/Themenseiten, Event-Seite): kein Bildbalken,
    läuft nach unten und zu den Seiten in den App-Verlauf aus. */
 .head-bg {
-  position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%);
+  position: absolute; z-index: -1; top: 0; left: 0; right: 0; margin: 0 auto;
   width: min(100%, 1440px); height: 220px; overflow: hidden; pointer-events: none;
   --fade-x: 8%;
   -webkit-mask-image: linear-gradient(#000 35%, transparent), linear-gradient(90deg, transparent, #000 var(--fade-x), #000 calc(100% - var(--fade-x)), transparent);
@@ -316,38 +324,40 @@ main { position: relative; isolation: isolate; }
 }
 .glass-img { background: rgba(255,255,255,.10); }
 
-/* Kompakte Glas-Boxen (Listen auf Kategorie- und Themenseiten). Ohne
-   backdrop-filter: über dem glatten Verlauf wäre die Unschärfe unsichtbar,
-   kostet am Handy aber bei jedem Scroll-Frame Rechenzeit (Ruckeln). */
+/* Kompakte Glas-Boxen (Kategorie-/Themenseiten, gleichartige Blöcke auf der
+   Event-Seite). Fast deckendes dunkles Glas ohne backdrop-filter, Rand 1 px.
+   Bei DPR < 2 ganz deckend (Schärfe, s. CARD_CSS). */
 .eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .eb {
   display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 12px 14px 12px 12px;
   border-radius: 16px; color: #fff; text-decoration: none;
-  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
-  box-shadow: 0 4px 14px rgba(0,0,0,.14);
+  background: rgba(20,26,42,.8); border: 1px solid rgba(255,255,255,.24);
+  box-shadow: 0 4px 14px rgba(0,0,0,.16);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .eb-plak {
   flex-shrink: 0; width: 60px; min-height: 60px; padding: 6px 4px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   border-radius: 12px; line-height: 1.1; text-align: center;
-  /* dunkles Glas wie die Info-Kacheln: helles Glas auf der Box läge unter 4,5:1 */
-  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.22);
 }
 .eb-plak svg { width: 16px; height: 16px; }
-.eb-plak b { font-size: 1rem; font-weight: 600; }
-.eb-plak small { font-size: .62rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
-.eb-past .eb-plak b { font-size: 1.25rem; }
+.eb-plak b { font-size: 16px; line-height: 20px; font-weight: 600; }
+.eb-plak small { font-size: 11px; line-height: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.eb-past .eb-plak b, .eb-dat .eb-plak b { font-size: 20px; line-height: 24px; }
 .eb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .eb-name {
-  font-size: 1.04rem; font-weight: 600; line-height: 1.3;
+  font-size: 17px; font-weight: 600; line-height: 22px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.eb-row { display: flex; align-items: center; gap: 5px; font-size: .9rem; font-weight: 400; min-width: 0; color: rgba(255,255,255,.91); }
-.eb-row svg { width: 15px; height: 15px; flex-shrink: 0; }
+.eb-row { display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 22px; font-weight: 500; min-width: 0; color: rgba(255,255,255,.94); }
+.eb-row svg { width: 16px; height: 16px; flex-shrink: 0; }
 .eb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.eb-zahlen { font-size: .78rem; font-weight: 400; color: rgba(255,255,255,.91); }
+.eb-zahlen { font-size: 13px; line-height: 18px; font-weight: 500; color: rgba(255,255,255,.94); }
 .eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
+@media (max-resolution: 1.99dppx) {
+  .eb { background: #1A2234; }
+}
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-img, .has-head .pill { background: rgba(20,24,34,.35); }
@@ -378,45 +388,66 @@ main { position: relative; isolation: isolate; }
 .ev-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 32px; }
 .ev-main { padding: 10px; }
 .ev-title { padding: 14px 8px 6px; }
+.ev-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .ev-chip {
-  display: inline-block; font-size: .68rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  display: inline-block; font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
   padding: 4px 12px; border-radius: 20px; text-decoration: none;
   background: rgba(10,14,20,.4); border: 1px solid rgba(255,255,255,.3);
 }
 a.ev-chip:hover { border-color: var(--accent); }
-.ev-title h1 { font-size: clamp(1.5rem, 5.8vw, 2.3rem); font-weight: 800; line-height: 1.15; margin: 10px 0 6px; text-wrap: balance; }
-.ev-gem { display: flex; align-items: center; gap: 6px; }
-.ev-gem svg { width: 18px; height: 18px; flex-shrink: 0; }
-.ev-zahlen { margin-top: 4px; font-size: .9rem; font-weight: 600; }
+.ev-age { border-color: rgba(245,160,74,.8); }
+.ev-title h1 { font-size: clamp(1.5rem, 5.8vw, 2.3rem); font-weight: 800; line-height: 1.15; margin: 12px 0 8px; text-wrap: balance; }
+/* Gemeinde · Bezirk · n wollen hin */
+.ev-meta { font-size: 15px; line-height: 22px; font-weight: 500; color: rgba(255,255,255,.94); }
+.ev-meta span:not(.sep), .ev-meta a { white-space: nowrap; }
+.ev-meta .sep { white-space: normal; color: rgba(255,255,255,.7); }
+.ev-meta a { text-decoration: underline; text-decoration-color: rgba(255,255,255,.45); text-underline-offset: 3px; }
+.ev-meta a:hover { text-decoration-color: var(--accent); }
 
-/* Info-Kacheln — Handy: Wann | Eintritt, darunter Wo, Veranstalter, Infos */
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 8px 0 0; }
-.tile {
-  display: grid; grid-template-columns: auto 1fr; align-items: center; align-content: start; column-gap: 8px;
-  min-width: 0; padding: 14px; border-radius: 16px;
+/* Fakten-Leiste: Handy untereinander, ab 640 px nebeneinander (fehlt
+   "Eintritt", teilen sich die zwei übrigen die Breite). Höhe nach Inhalt. */
+.facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0 0; }
+.fact {
+  min-width: 0; padding: 14px 16px; border-radius: 16px; overflow-wrap: anywhere;
   /* dunkles Glas: Weiß auf Weiß-Glas wäre zu hell für WCAG AA */
-  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.16);
+  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.18);
 }
-.tile > svg { width: 20px; height: 20px; }
-.tile .lbl { font-size: .7rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
-.tile .val { grid-column: 1 / -1; margin-top: 6px; line-height: 1.45; overflow-wrap: anywhere; }
-.tile small { display: block; font-size: .85rem; margin-top: 2px; }
-.tile a { text-decoration: underline; text-decoration-color: rgba(255,255,255,.5); text-underline-offset: 3px; }
-.t-wann { order: 1; }
-.t-eintritt { order: 2; }
-.t-wo { order: 3; grid-column: 1 / -1; }
-.t-veranst { order: 4; grid-column: 1 / -1; }
-.t-infos { order: 5; grid-column: 1 / -1; }
-.solo-m { grid-column: 1 / -1; }
-.desc p { margin-bottom: 10px; }
+.fact .lbl { display: block; margin-bottom: 8px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.8); }
+.fact p { font-size: 15px; line-height: 22px; font-weight: 500; }
+.fact .f-val { font-size: 17px; line-height: 24px; font-weight: 600; }
+.f-date { display: flex; align-items: center; gap: 12px; }
+.f-plak {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center; min-width: 52px; padding: 5px 8px 6px;
+  border-radius: 12px; line-height: 1.1; text-align: center;
+  background: rgba(20,24,34,.6); border: 1px solid rgba(255,255,255,.25);
+}
+.f-plak small { font-size: 10px; line-height: 13px; font-weight: 600; letter-spacing: 1px; }
+.f-plak b { font-size: 22px; line-height: 26px; font-weight: 600; }
+.f-dtxt { display: flex; flex-direction: column; min-width: 0; }
+.f-dtxt span { font-size: 15px; line-height: 22px; font-weight: 500; }
+.f-zeit { font-size: 16px; line-height: 24px; font-weight: 600; }
+.preis { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 4px 0; font-size: 15px; line-height: 22px; font-weight: 500; }
+.preis + .preis { border-top: 1px solid rgba(255,255,255,.14); }
+.preis b { font-size: 17px; line-height: 24px; font-weight: 600; white-space: nowrap; }
+.f-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.f-btn, .f-link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; font-weight: 600; text-decoration: none; }
+.f-btn svg, .f-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+.f-btn { padding: 6px 12px; border-radius: 10px; background: var(--accent); color: var(--ink); }
+.f-btn:hover { background: var(--accent-2); }
+.f-link { margin-top: 8px; color: var(--green); }
+.f-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Beschreibung: eigener Abschnitt, Lesetext ca. 65 Zeichen pro Zeile.
+   Links in Akzentfarbe, aufgehellt: #F5A04A läge auf dem Glas über der
+   hellsten Verlaufsstelle bei 3,2:1, #FFD09A bei 4,7:1 (WCAG AA). */
+.ev-desc { padding: 22px 8px 10px; }
+.ev-desc h2 { font-size: 18px; line-height: 24px; font-weight: 700; margin-bottom: 10px; }
+.desc { max-width: 65ch; font-size: 17px; line-height: 1.6; overflow-wrap: anywhere; }
+.desc p { margin-bottom: 14px; }
 .desc p:last-child { margin-bottom: 0; }
-.tile .navlink {
-  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
-  padding: 8px 12px; border-radius: 10px; text-decoration: none;
-  border: 1.5px solid rgba(0,230,118,.75); background: rgba(10,14,20,.45);
-  color: var(--green); font-size: .86rem; font-weight: 600;
-}
-.tile .navlink svg { width: 15px; height: 15px; }
+.desc a { color: #FFD09A; text-decoration: underline; text-decoration-color: rgba(255,208,154,.5); text-underline-offset: 3px; }
+.desc a:hover { text-decoration-color: currentColor; }
+.ev-veranst { margin-top: 16px; font-size: 15px; line-height: 22px; font-weight: 500; color: rgba(255,255,255,.94); }
 
 /* Mitfahren-Spalte */
 .side { padding: 20px; }
@@ -498,13 +529,8 @@ a.ev-chip:hover { border-color: var(--accent); }
   .ev-layout { margin-top: 72px; }
   .ev-main { padding: 12px; }
   .ev-title { padding: 18px 10px 8px; }
-  .tiles { padding: 10px 0 0; gap: 12px; }
-  .t-wann, .t-wo, .t-eintritt, .t-veranst { grid-column: auto; }
-  .t-wann { order: 1; }
-  .t-wo { order: 2; }
-  .t-eintritt { order: 3; }
-  .t-veranst { order: 4; }
-  .solo-d { grid-column: 1 / -1; }
+  .facts { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 12px; padding: 12px 0 0; }
+  .ev-desc { padding: 26px 10px 12px; }
   .side { padding: 24px; }
   .nf-btns { flex-direction: row; }
   .nf-btns > a { flex: 1; }
@@ -513,6 +539,6 @@ a.ev-chip:hover { border-color: var(--accent); }
 @media (min-width: 1024px) {
   .ev-layout { grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; margin-top: 110px; }
   .ev-side { position: sticky; top: 86px; }
-  .ev-zahlen { display: none; }
+  .m-fahrten { display: none; }
 }
 ${CARD_CSS}`;
