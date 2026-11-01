@@ -27,6 +27,7 @@
   > Jarvis 31.10.: Abnahme begonnen, Lukas hat noch einige Designänderungen.
 - [x] CLS-Fix Poppins-Ersatzschrift (2026-10-31)
 - [x] Design 2d-Feinschliff: Poster-Text, Detailseite mit Fakten-Leiste + Beschreibung, Schärfe DPR 1, Download-Bereich, Footer (2026-11-01, nur Vorschau)
+- [ ] Glas-Boxen dunkel oder hell entscheiden (Test-Schalter auf der Vorschau-Startseite bei „Was geht in Kärnten?“), danach Variante übernehmen und Schalter entfernen (`glass-test`/`glas-hell` in `public/home.html` + `public/style.css`)
 - [ ] Design final abnehmen (Nutzer: „wird immer besser, noch nicht final“)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
 - [ ] Startseiten-Performance: Hero-Screenshot als LCP (Lighthouse 81–88)
