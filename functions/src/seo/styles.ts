@@ -24,10 +24,9 @@
 //
 // Schärfe auf Monitoren mit Gerätepixelverhältnis 1: nur ganze Pixel bei
 // Schrift, Abständen und Icons, Text unter 15 px mit mindestens 500, kein
-// transform im Ruhezustand. Chrome glättet Text nur dann mit Subpixeln, wenn
-// er auf deckendem Grund liegt — über dem festen Verlauf ist alles
-// durchsichtig. Karten und Glas-Boxen bekommen deshalb bei DPR < 2 einen
-// deckenden Hintergrund in der Mischfarbe, auf Retina bleibt das Glas.
+// transform im Ruhezustand. Karten und Glas-Boxen bleiben auch bei DPR 1
+// helles Glas (Entscheidung 2026-11-02). Ein deckender Hintergrund gäbe
+// Chrome-Subpixelglättung, sähe aber als Block statt als Glas aus.
 const CARD_FONT = "'Poppins', 'Poppins Fallback', 'Poppins Fallback Roboto', sans-serif";
 
 export const CARD_CSS = `
@@ -149,10 +148,10 @@ details[open] > .pill svg { transform: rotate(180deg); }
   .pc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .pc .m-only { display: none; }
   .pc .d-only { display: block; }
-  /* Textbereich dunkles Glas: Weiß 96 % darauf über der hellsten Verlaufsstelle 12:1 */
+  /* Helles Glas (Weiß 12 %): Weiß 96 % darauf über der hellsten Verlaufsstelle 5,1:1 */
   .pc {
     flex-direction: column; min-height: 0; border-radius: 18px;
-    background: rgba(16,20,32,.58); border: 1px solid rgba(255,255,255,.2);
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
   }
   .pc-media { position: relative; inset: auto; z-index: 0; aspect-ratio: 16 / 9; margin: 8px 8px 0; border-radius: 13px; }
   .pc-media::after { display: none; }
@@ -160,7 +159,8 @@ details[open] > .pill svg { transform: rotate(180deg); }
     display: flex; flex-direction: column; align-items: center;
     position: absolute; top: 10px; left: 10px; z-index: 1; min-width: 50px; padding: 5px 8px 6px;
     border-radius: 12px; line-height: 1.1; text-align: center;
-    background: rgba(20,24,34,.72); border: 1px solid rgba(255,255,255,.28);
+    background: rgba(20,24,34,.6); border: 1px solid rgba(255,255,255,.25);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
   .pc-date small { font-size: 10px; font-weight: 600; letter-spacing: 1px; }
   .pc-date b { font-size: 22px; line-height: 24px; font-weight: 600; }
@@ -168,13 +168,14 @@ details[open] > .pill svg { transform: rotate(180deg); }
     display: inline-block; position: absolute; top: 10px; right: 10px; z-index: 1;
     font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
     padding: 3px 10px; border-radius: 20px;
-    background: rgba(20,24,34,.72); border: 1px solid rgba(255,255,255,.3);
+    background: rgba(20,24,34,.6); border: 1px solid rgba(255,255,255,.28);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
   .pc-body { justify-content: flex-start; padding: 16px 16px 12px; }
   .pc .pc-name { min-height: 48px; margin-bottom: 2px; text-shadow: none; }
   .pc-row { text-shadow: none; }
   .pc-foot {
-    margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.18);
+    margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.16);
     display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 34px;
     font-size: 13px; font-weight: 500; color: rgba(255,255,255,.94);
   }
@@ -184,16 +185,12 @@ details[open] > .pill svg { transform: rotate(180deg); }
 @media (min-width: 1024px) {
   .pc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-/* DPR < 2: deckend statt Glas (Mischfarbe über der Verlaufsmitte), s. oben */
-@media (min-width: 640px) and (max-resolution: 1.99dppx) {
-  .pc { background: #1D2536; }
-}
-
 /* ─── TAGESGRUPPEN ─── */
 .day { margin-top: 22px; }
 .day-h { display: flex; align-items: baseline; gap: 10px; font-size: 18px; font-weight: 800; margin-bottom: 12px; color: #fff; }
 .day-h span { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.88); }
-/* Am Desktop sticky, fast deckend statt backdrop-filter */
+/* Am Desktop sticky, fast deckend statt backdrop-filter. Bleibt bewusst dunkel
+   (Entscheidung 2026-11-02), Karten und Boxen sind helles Glas. */
 @media (min-width: 1024px) {
   .day-h {
     position: sticky; top: 66px; z-index: 3;
@@ -325,21 +322,23 @@ main { position: relative; isolation: isolate; }
 .glass-img { background: rgba(255,255,255,.10); }
 
 /* Kompakte Glas-Boxen (Kategorie-/Themenseiten, gleichartige Blöcke auf der
-   Event-Seite). Fast deckendes dunkles Glas ohne backdrop-filter, Rand 1 px.
-   Bei DPR < 2 ganz deckend (Schärfe, s. CARD_CSS). */
+   Event-Seite). Helles Glas wie die Poster-Karten, ohne backdrop-filter: über
+   dem glatten Verlauf wäre die Unschärfe unsichtbar, kostet am Handy aber bei
+   jedem Scroll-Frame Rechenzeit (Ruckeln). */
 .eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .eb {
   display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 12px 14px 12px 12px;
   border-radius: 16px; color: #fff; text-decoration: none;
-  background: rgba(20,26,42,.8); border: 1px solid rgba(255,255,255,.24);
-  box-shadow: 0 4px 14px rgba(0,0,0,.16);
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
+  box-shadow: 0 4px 14px rgba(0,0,0,.14);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .eb-plak {
   flex-shrink: 0; width: 60px; min-height: 60px; padding: 6px 4px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   border-radius: 12px; line-height: 1.1; text-align: center;
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.22);
+  /* dunkles Glas wie die Fakten: helles Glas auf der Box läge unter 4,5:1 */
+  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
 }
 .eb-plak svg { width: 16px; height: 16px; }
 .eb-plak b { font-size: 16px; line-height: 20px; font-weight: 600; }
@@ -355,9 +354,6 @@ main { position: relative; isolation: isolate; }
 .eb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .eb-zahlen { font-size: 13px; line-height: 18px; font-weight: 500; color: rgba(255,255,255,.94); }
 .eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
-@media (max-resolution: 1.99dppx) {
-  .eb { background: #1A2234; }
-}
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-img, .has-head .pill { background: rgba(20,24,34,.35); }
