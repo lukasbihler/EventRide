@@ -373,23 +373,30 @@ export function eventCard(ev: CardEvent, o: CardOpts = {}): string {
 // Kompakte Glas-Box. In Tagesgruppen (Kategorie-/Themenseiten) Plakette mit der
 // Uhrzeit — das Datum steht in der Tages-Überschrift. Ohne Tagesgruppe (Blöcke
 // auf der Event-Seite) Plakette mit dem Datum, die Uhrzeit als eigene Zeile.
-// Vergangene Termine: Tag, Monat und Jahr.
+// Vergangene Termine: Tag, Monat und Jahr. Ort mit Bezirk; Fahrten und
+// "wollen hin" als Chips (Fahrten orange hervorgehoben).
 export function eventBox(ev: CardEvent, o: CardOpts = {}): string {
   const p = parts(ev.startDay);
   const mitDatum = !o.past && !o.nurZeit;
   const plak = o.past ?
     `<b>${p.d}</b><small>${MON_PLAKETTE[p.m - 1]} ${p.y}</small>` :
     mitDatum ? plakette(ev.startDay) :
-      `${icon(P_DATE, "i-amber")}${ev.uhrzeit ? `<b>${esc(ev.uhrzeit)}</b>` : "<small>Zeit offen</small>"}`;
-  const zahlen = o.past ? "" : zahlenZeile(ev.fahrten ?? 0, ev.interessenten ?? 0);
+      ev.uhrzeit ? `<b>${esc(ev.uhrzeit)}</b><small>Uhr</small>` : "<small>Zeit</small><small>offen</small>";
   const zeit = mitDatum && ev.uhrzeit ?
     `<span class="eb-row">${icon(P_TIME, "i-amber")}<span>${esc(ev.uhrzeit)} Uhr</span></span>` : "";
+  const bezirk = ev.bezirk && ev.bezirk !== ev.gemeinde ? `<span class="eb-bez"> · ${esc(ev.bezirk)}</span>` : "";
+  const fahrten = o.past ? 0 : ev.fahrten ?? 0;
+  const interessenten = o.past ? 0 : ev.interessenten ?? 0;
+  const chips = [
+    fahrten > 0 ? `<span class="eb-chip eb-fahrt">${icon(P_CAR)}${esc(zahlenZeile(fahrten, 0))}</span>` : "",
+    interessenten > 0 ? `<span class="eb-chip">${esc(zahlenZeile(0, interessenten))}</span>` : "",
+  ].join("");
   return `<a class="eb${o.past ? " eb-past" : mitDatum ? " eb-dat" : ""}" href="/event/${esc(ev.slug)}">
   <span class="eb-plak">${plak}</span>
   <span class="eb-body">
     <h3 class="eb-name">${esc(ev.name)}</h3>
-    ${zeit}<span class="eb-row">${icon(P_PIN, "i-red")}<span>${esc(ev.gemeinde || "Kärnten")}</span></span>
-    ${zahlen ? `<span class="eb-zahlen">${esc(zahlen)}</span>` : ""}
+    ${zeit}<span class="eb-row">${icon(P_PIN, "i-red")}<span>${esc(ev.gemeinde || "Kärnten")}${bezirk}</span></span>
+    ${chips ? `<span class="eb-chips">${chips}</span>` : ""}
   </span>
   ${icon(P_FWD, "eb-arrow")}
 </a>`;

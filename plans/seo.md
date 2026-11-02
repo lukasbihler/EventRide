@@ -27,8 +27,9 @@
   > Jarvis 31.10.: Abnahme begonnen, Lukas hat noch einige Designänderungen.
 - [x] CLS-Fix Poppins-Ersatzschrift (2026-10-31)
 - [x] Design 2d-Feinschliff: Poster-Text, Detailseite mit Fakten-Leiste + Beschreibung, Schärfe DPR 1, Download-Bereich, Footer (2026-11-01, nur Vorschau)
-- [x] Glas-Boxen hell übernommen (Karten + Boxen), nur die Tageszeile bleibt dunkel; Test-Schalter entfernt (2026-11-02, nur Vorschau)
-- [ ] Karten auf den Typ-/Themenseiten (Glas-Boxen ohne Bild) neu gestalten – Lukas gefallen sie nicht
+- [x] Glas-Boxen hell übernommen (Karten + Boxen), nur die Tageszeile bleibt dunkel; Test-Schalter entfernt (2026-11-02)
+- [x] Boxen auf den Typ-/Themenseiten aufgewertet: Uhrzeit-Plakette mit orangem Rand, Ort + Bezirk, Chips für Fahrten / „wollen hin“ (2026-11-02, live auf web.app inkl. 2d-Feinschliff)
+- [ ] Boxen-Aufwertung abnehmen (Lukas testet am Handy); Timeline verworfen (man wählt ein Event, klappert nicht mehrere ab)
 - [ ] Design final abnehmen (Nutzer: „wird immer besser, noch nicht final“)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
 - [ ] Startseiten-Performance: Hero-Screenshot als LCP (Lighthouse 81–88)

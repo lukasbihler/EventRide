@@ -327,32 +327,44 @@ main { position: relative; isolation: isolate; }
    jedem Scroll-Frame Rechenzeit (Ruckeln). */
 .eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .eb {
-  display: flex; align-items: center; gap: 14px; min-height: 84px; padding: 12px 14px 12px 12px;
+  display: flex; align-items: center; gap: 14px; min-height: 92px; padding: 14px 14px 14px 12px;
   border-radius: 16px; color: #fff; text-decoration: none;
   background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
   box-shadow: 0 4px 14px rgba(0,0,0,.14);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
+/* Plakette: Uhrzeit (Tagesgruppen) bzw. Datum, dunkles Glas wie die Fakten
+   (helles Glas auf der Box läge unter 4,5:1), oranger Rand als Akzent */
 .eb-plak {
-  flex-shrink: 0; width: 60px; min-height: 60px; padding: 6px 4px;
+  flex-shrink: 0; align-self: flex-start; width: 64px; min-height: 64px; padding: 6px 4px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  border-radius: 12px; line-height: 1.1; text-align: center;
-  /* dunkles Glas wie die Fakten: helles Glas auf der Box läge unter 4,5:1 */
-  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
+  border-radius: 14px; line-height: 1.1; text-align: center;
+  background: rgba(10,14,22,.22); border: 1px solid rgba(245,160,74,.6);
 }
-.eb-plak svg { width: 16px; height: 16px; }
-.eb-plak b { font-size: 16px; line-height: 20px; font-weight: 600; }
-.eb-plak small { font-size: 11px; line-height: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.eb-plak b { font-size: 18px; line-height: 22px; font-weight: 600; }
+.eb-plak small { font-size: 11px; line-height: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.92); }
 .eb-past .eb-plak b, .eb-dat .eb-plak b { font-size: 20px; line-height: 24px; }
-.eb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.eb-past .eb-plak { border-color: rgba(255,255,255,.22); }
+.eb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .eb-name {
-  font-size: 17px; font-weight: 600; line-height: 22px;
+  font-size: 18px; font-weight: 600; line-height: 24px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .eb-row { display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 22px; font-weight: 500; min-width: 0; color: rgba(255,255,255,.94); }
 .eb-row svg { width: 16px; height: 16px; flex-shrink: 0; }
 .eb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.eb-zahlen { font-size: 13px; line-height: 18px; font-weight: 500; color: rgba(255,255,255,.94); }
+.eb-bez { font-weight: 400; }
+/* Fahrten / "wollen hin": Chips auf dunklem Glas. Orange Schrift aufgehellt
+   (#FFD09A, s. .desc a) — #F5A04A wäre als Text zu schwach. */
+.eb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.eb-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px;
+  font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap;
+  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
+}
+.eb-chip svg { width: 14px; height: 14px; flex-shrink: 0; }
+.eb-fahrt { color: #FFD09A; border-color: rgba(245,160,74,.75); font-weight: 600; }
+.eb-fahrt svg { fill: #F5A04A; }
 .eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
