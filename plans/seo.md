@@ -17,7 +17,7 @@
 - [x] Abnahme Vorschau: Quelltext, Leak-Test, JSON-LD, Lighthouse (2026-10-30)
 - [ ] Google Rich Results Test manuell (Event + Breadcrumb, auch ein mehrtägiges Event)
 - [ ] `IOS_PROVIDER_TOKEN` in `functions/src/seo/render.ts` eintragen (Token vom Nutzer)
-- [ ] Bildrechte der OG-Bilder prüfen (`krampus.jpg` = Instagram-Screenshot, Feuerwehrfoto mit Kennzeichen)
+- [x] Bildrechte der OG-Bilder geprüft, passen laut Lukas (2026-11-03)
 - [ ] `firestore.rules` mit Regel für `event_pages` beim nächsten Rules-Deploy mitnehmen
 
 ## Schritt 1b/2 – Ausbau + Design
