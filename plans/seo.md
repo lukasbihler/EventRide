@@ -38,9 +38,11 @@
 - [ ] Eigene Hosting-Site für den Manager
 
 ## Livegang (DNS-Umzug)
-- [ ] Domain verbinden: Firebase Hosting Custom Domain `www.eventride.at` + `eventride.at` → bei World4You nur A-Records `@` und `www` ändern (MX bleibt)
-- [ ] SSL aktiv, `/datenschutz.html` 200, Passwort-Reset-Link testen, `X-Robots-Tag` am Manager prüfen
-- [ ] SPF-Test: Testmail von `@eventride.at` an Gmail → SPF = PASS
+- [x] Domain verbunden: `@` A 199.36.158.100, `www` CNAME eventride-cd0e9.web.app, TXT `hosting-site=eventride-cd0e9`; `ftp` + Mail unverändert. Rollback: `@` + `www` A 81.19.159.34 (2026-11-03)
+- [x] SSL aktiv (Google Trust Services, bis 2027-02-01), `eventride.at` → 301 www, `/datenschutz.html` 200, Sitemap 83 URLs, 404 ok, `X-Robots-Tag` an Manager und `/auth/` (2026-11-03)
+- [ ] Passwort-Reset einmal echt aus der App testen (Seiten unter `/auth/` liefern 200)
+- [x] SPF-Test: SPF, DKIM, DMARC = PASS (2026-11-03)
+  > Testmail landete trotzdem im Gmail-Spam – keine DNS-Ursache, siehe Antwort im Chat
 - [ ] `.github/workflows/deploy-website.yml` von FTP auf Firebase Hosting umstellen
 - [ ] Erst danach `feature/seo-event-pages` → `main` mergen
 - [ ] CLAUDE.md (Hosting, `index.html` → `home.html`) und Memory `project_website_deploy` anpassen
