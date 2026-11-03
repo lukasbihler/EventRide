@@ -31,7 +31,7 @@
 - [x] Boxen auf den Typ-/Themenseiten aufgewertet: Uhrzeit-Plakette mit orangem Rand, Ort + Bezirk, Chips für Fahrten / „wollen hin“ (2026-11-02, live auf web.app inkl. 2d-Feinschliff)
 - [x] Boxen neu als „Abfahrtstafel“-Zeilen: eine Spalte, Desktop Zeit | Event | Mitfahren | Button, Handy kompakt mit Button neben der Uhrzeit (2026-11-03, nur Vorschau); Timeline verworfen (man wählt ein Event, klappert nicht mehrere ab)
 - [x] Abfahrtstafel-Zeilen abgenommen (2026-11-03)
-- [ ] Abfahrtstafel live auf web.app: `npx firebase-tools deploy --only functions:seo,hosting --force`
+- [x] Abfahrtstafel live auf web.app (2026-11-03)
 - [x] Design für den Livegang abgenommen („so lassen wir es fürs erste“) (2026-11-03)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
 - [ ] Startseiten-Performance: Hero-Screenshot als LCP (Lighthouse 81–88)
