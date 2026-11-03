@@ -43,9 +43,9 @@
 - [ ] Passwort-Reset einmal echt aus der App testen (Seiten unter `/auth/` liefern 200)
 - [x] SPF-Test: SPF, DKIM, DMARC = PASS (2026-11-03)
   > Testmail landete trotzdem im Gmail-Spam – keine DNS-Ursache, siehe Antwort im Chat
-- [ ] `.github/workflows/deploy-website.yml` von FTP auf Firebase Hosting umstellen
-- [ ] Erst danach `feature/seo-event-pages` → `main` mergen
-- [ ] CLAUDE.md (Hosting, `index.html` → `home.html`) und Memory `project_website_deploy` anpassen
+- [x] `.github/workflows/deploy-website.yml` auf Firebase Hosting umgestellt (Dienstkonto `github-hosting-deploy`, Secret `FIREBASE_SERVICE_ACCOUNT`), Testlauf vom Branch grün (2026-11-03)
+- [ ] `feature/seo-event-pages` → `main` mergen (konfliktfrei geprüft 2026-11-03)
+- [x] CLAUDE.md angepasst (2026-11-03) · [ ] Memory `project_website_deploy` anpassen
 - [ ] Sitemap in der Google Search Console einreichen
 
 ## Schritt 3 – später
