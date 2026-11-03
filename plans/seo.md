@@ -45,7 +45,7 @@
   > Testmail landete trotzdem im Gmail-Spam – keine DNS-Ursache, siehe Antwort im Chat
 - [x] `.github/workflows/deploy-website.yml` auf Firebase Hosting umgestellt (Dienstkonto `github-hosting-deploy`, Secret `FIREBASE_SERVICE_ACCOUNT`), Testlauf vom Branch grün (2026-11-03)
 - [ ] `feature/seo-event-pages` → `main` mergen (konfliktfrei geprüft 2026-11-03)
-- [x] CLAUDE.md angepasst (2026-11-03) · [ ] Memory `project_website_deploy` anpassen
+- [x] CLAUDE.md und Memory `project_website_deploy` angepasst (2026-11-03)
 - [ ] Sitemap in der Google Search Console einreichen
 
 ## Schritt 3 – später
