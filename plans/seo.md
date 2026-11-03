@@ -29,7 +29,8 @@
 - [x] Design 2d-Feinschliff: Poster-Text, Detailseite mit Fakten-Leiste + Beschreibung, Schärfe DPR 1, Download-Bereich, Footer (2026-11-01, nur Vorschau)
 - [x] Glas-Boxen hell übernommen (Karten + Boxen), nur die Tageszeile bleibt dunkel; Test-Schalter entfernt (2026-11-02)
 - [x] Boxen auf den Typ-/Themenseiten aufgewertet: Uhrzeit-Plakette mit orangem Rand, Ort + Bezirk, Chips für Fahrten / „wollen hin“ (2026-11-02, live auf web.app inkl. 2d-Feinschliff)
-- [ ] Boxen-Aufwertung abnehmen (Lukas testet am Handy); Timeline verworfen (man wählt ein Event, klappert nicht mehrere ab)
+- [x] Boxen neu als „Abfahrtstafel“-Zeilen: eine Spalte, Desktop Zeit | Event | Mitfahren | Button, Handy kompakt mit Button neben der Uhrzeit (2026-11-03, nur Vorschau); Timeline verworfen (man wählt ein Event, klappert nicht mehrere ab)
+- [ ] Abfahrtstafel-Zeilen abnehmen (Lukas testet am Handy), danach live
 - [ ] Design final abnehmen (Nutzer: „wird immer besser, noch nicht final“)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
 - [ ] Startseiten-Performance: Hero-Screenshot als LCP (Lighthouse 81–88)

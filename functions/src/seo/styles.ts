@@ -321,51 +321,74 @@ main { position: relative; isolation: isolate; }
 }
 .glass-img { background: rgba(255,255,255,.10); }
 
-/* Kompakte Glas-Boxen (Kategorie-/Themenseiten, gleichartige Blöcke auf der
-   Event-Seite). Helles Glas wie die Poster-Karten, ohne backdrop-filter: über
-   dem glatten Verlauf wäre die Unschärfe unsichtbar, kostet am Handy aber bei
-   jedem Scroll-Frame Rechenzeit (Ruckeln). */
-.eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+/* Event-Zeilen wie eine Abfahrtstafel (Kategorie-/Themenseiten, gleichartige
+   Blöcke auf der Event-Seite). Immer eine Spalte, Layout nach Breite der
+   Liste (Container Query): schmal Zeit + Button oben, darunter Name und Ort,
+   Mitfahr-Zahlen nur wenn vorhanden; ab 680 px Spalten Zeit | Event |
+   Mitfahren | Button, damit Zeiten und Buttons untereinander bündig stehen.
+   Uhrzeit in Bernstein wie auf einer Abfahrtstafel: #FFD09A auf hellem Glas
+   3,9:1, reicht ab 20 px / 600 (Großschrift, WCAG AA 3:1).
+   Helles Glas wie die Poster-Karten, ohne backdrop-filter: über dem glatten
+   Verlauf wäre die Unschärfe unsichtbar, kostet am Handy aber bei jedem
+   Scroll-Frame Rechenzeit (Ruckeln). */
+.eb-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; container-type: inline-size; }
 .eb {
-  display: flex; align-items: center; gap: 14px; min-height: 92px; padding: 14px 14px 14px 12px;
-  border-radius: 16px; color: #fff; text-decoration: none;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "when cta" "main main" "stat stat";
+  align-items: center; gap: 8px 12px; padding: 14px 16px 16px;
+  border-radius: 18px; color: #fff; text-decoration: none;
   background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22);
   box-shadow: 0 4px 14px rgba(0,0,0,.14);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
-/* Plakette: Uhrzeit (Tagesgruppen) bzw. Datum, dunkles Glas wie die Fakten
-   (helles Glas auf der Box läge unter 4,5:1), oranger Rand als Akzent */
-.eb-plak {
-  flex-shrink: 0; align-self: flex-start; width: 64px; min-height: 64px; padding: 6px 4px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  border-radius: 14px; line-height: 1.1; text-align: center;
-  background: rgba(10,14,22,.22); border: 1px solid rgba(245,160,74,.6);
-}
-.eb-plak b { font-size: 18px; line-height: 22px; font-weight: 600; }
-.eb-plak small { font-size: 11px; line-height: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.92); }
-.eb-past .eb-plak b, .eb-dat .eb-plak b { font-size: 20px; line-height: 24px; }
-.eb-past .eb-plak { border-color: rgba(255,255,255,.22); }
-.eb-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.eb-when { grid-area: when; display: flex; align-items: baseline; gap: 6px; }
+.eb-when b { font-size: 22px; line-height: 28px; font-weight: 600; font-variant-numeric: tabular-nums; color: #FFD09A; }
+.eb-when small { font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.92); }
+.eb-past .eb-when b { color: #fff; }
+.eb-main { grid-area: main; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .eb-name {
-  font-size: 18px; font-weight: 600; line-height: 24px;
+  font-size: 19px; font-weight: 600; line-height: 26px;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .eb-row { display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 22px; font-weight: 500; min-width: 0; color: rgba(255,255,255,.94); }
 .eb-row svg { width: 16px; height: 16px; flex-shrink: 0; }
 .eb-row > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .eb-bez { font-weight: 400; }
-/* Fahrten / "wollen hin": Chips auf dunklem Glas. Orange Schrift aufgehellt
-   (#FFD09A, s. .desc a) — #F5A04A wäre als Text zu schwach. */
-.eb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.eb-chip {
-  display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 20px;
-  font-size: 13px; line-height: 18px; font-weight: 500; white-space: nowrap;
-  background: rgba(10,14,22,.22); border: 1px solid rgba(255,255,255,.22);
+.eb-stat { grid-area: stat; display: flex; flex-wrap: wrap; gap: 2px 14px; min-width: 0; font-size: 14px; line-height: 20px; font-weight: 500; color: rgba(255,255,255,.94); }
+.eb-stat:empty { display: none; }
+.eb-stat > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.eb-stat svg { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
+.eb-fahrt { font-weight: 600; color: #fff; }
+/* Button auf dunklem Glas: #FFD09A darauf über der hellsten Verlaufsstelle
+   5,3:1, direkt auf dem hellen Glas wären es nur 3,9:1. Beim Überfahren der
+   Zeile füllt er sich orange. */
+.eb-cta {
+  grid-area: cta; display: inline-flex; align-items: center; gap: 2px;
+  padding: 5px 6px 5px 12px; border-radius: 12px; white-space: nowrap;
+  font-size: 13px; line-height: 20px; font-weight: 600; color: #FFD09A;
+  background: rgba(10,14,22,.22); border: 1.5px solid rgba(245,160,74,.75);
+  transition: background .15s, color .15s, border-color .15s;
 }
-.eb-chip svg { width: 14px; height: 14px; flex-shrink: 0; }
-.eb-fahrt { color: #FFD09A; border-color: rgba(245,160,74,.75); font-weight: 600; }
-.eb-fahrt svg { fill: #F5A04A; }
-.eb-arrow { width: 18px; height: 18px; flex-shrink: 0; fill: var(--accent); }
+.eb-cta svg { width: 18px; height: 18px; fill: currentColor; }
+.eb-past .eb-cta { color: #fff; border-color: rgba(255,255,255,.3); }
+@media (hover: hover) {
+  .eb:hover .eb-cta { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+}
+.eb:focus-visible .eb-cta { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+@container (min-width: 680px) {
+  .eb {
+    grid-template-columns: 88px minmax(0, 1fr) 160px auto; grid-template-areas: "when main stat cta";
+    gap: 0 22px; min-height: 96px; padding: 16px 20px 16px 6px;
+  }
+  /* Zeit-Spalte mit Trennlinie, Zahl groß und zentriert */
+  .eb-when {
+    flex-direction: column; align-items: center; justify-content: center; gap: 0;
+    align-self: stretch; border-right: 1px solid rgba(255,255,255,.18);
+  }
+  .eb-when b { font-size: 26px; line-height: 32px; }
+  .eb-past .eb-when b, .eb-dat .eb-when b { font-size: 28px; line-height: 32px; }
+  .eb-stat { flex-direction: column; align-items: flex-start; }
+  .eb-cta { padding: 9px 10px 9px 16px; font-size: 14px; }
+}
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-img, .has-head .pill { background: rgba(20,24,34,.35); }
@@ -533,7 +556,7 @@ a.ev-chip:hover { border-color: var(--accent); }
   .page { padding: 24px 24px 64px; }
   .m-stores { display: none; }
   .head-bg { height: 360px; --fade-x: 12%; }
-  .eb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .eb-grid { gap: 12px; }
   .ev-layout { margin-top: 72px; }
   .ev-main { padding: 12px; }
   .ev-title { padding: 18px 10px 8px; }
