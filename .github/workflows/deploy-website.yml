@@ -1,4 +1,10 @@
-name: Deploy Website → World4You
+name: Deploy Website → Firebase Hosting
+
+# eventride.at läuft seit 2026-11-03 auf Firebase Hosting (vorher FTP zu World4You).
+# Deployt nur das Hosting (public/ + firebase.json). Die SSR-Function `seo`
+# wird weiterhin manuell deployt: npx firebase-tools deploy --only functions:seo
+# Rollback: A-Records `@` und `www` bei World4You auf 81.19.159.34, FTP-Secrets
+# sind noch hinterlegt.
 
 on:
   workflow_dispatch:
@@ -6,21 +12,17 @@ on:
     branches: [main]
     paths:
       - "public/**"
+      - "firebase.json"
 
 jobs:
-  ftp-deploy:
+  hosting-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: FTP Deploy public/ → eventride.at
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Firebase Hosting deploy → eventride.at
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          local-dir: ./public/
-          server-dir: ${{ secrets.FTP_PATH }}
-          exclude: |
-            **/.git*
-            **/.git*/**
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: eventride-cd0e9
+          channelId: live

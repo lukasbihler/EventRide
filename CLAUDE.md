@@ -2,19 +2,22 @@
 
 ## Website (eventride.at)
 
-**Hosting:** World4You (FTP) — NICHT Firebase Hosting  
-**Deployment:** `git push` → GitHub Actions (`.github/workflows/deploy-website.yml`) → FTP nach World4You  
-**Manueller Trigger:** GitHub → Actions → "Deploy Website → World4You" → Run workflow  
+**Hosting:** Firebase Hosting (seit 2026-11-03, `www.eventride.at`, `eventride.at` → 301 www). DNS bleibt bei World4You (`@` A 199.36.158.100, `www` CNAME eventride-cd0e9.web.app, Mail unverändert).  
+**Deployment Hosting:** `git push` auf `main` → GitHub Actions (`.github/workflows/deploy-website.yml`) → Firebase Hosting (nur `public/` + `firebase.json`)  
+**Deployment SSR:** Function `seo` (`functions/src/seo/`) manuell: `npx firebase-tools deploy --only functions:seo`  
+**Vorschau:** `bash scripts/deploy_seo_preview.sh` (Kanal `seo-preview` + Function `seoNext`)  
+**Manueller Trigger:** GitHub → Actions → "Deploy Website → Firebase Hosting" → Run workflow  
 **Dateien bearbeiten:** Immer in `public/` — nie in `web_assets/` (veraltetes Verzeichnis)
 
 | Datei | Inhalt |
 |-------|--------|
-| `public/index.html` | Landing Page + interaktive App-Preview |
-| `public/eventride_manager.html` | Admin-Panel (Events anlegen) |
+| `public/home.html` | Vorlage der Startseite — die Function `seo` setzt Events + Filter serverseitig ein (`/` und `/index.html`) |
+| `functions/src/seo/` | SEO-Seiten: `/event/{slug}`, Übersichten `/…-kaernten`, `/events-…`, Sitemap, `/app` |
+| `public/eventride_manager.html` | Admin-Panel (Events anlegen), `noindex` |
 | `public/assets/image/` | Event-Hintergrundbilder (kirchtag6.jpg etc.) |
 
 **App-Preview** im `#screenshots`-Abschnitt: iPhone-Mockup mit 3 navigierbaren Screens,  
-lädt echte Events aus Firestore, Design 1:1 wie die App (Gradient `#B79B78→#52A1EF→#406CFB`, Akzent `#F5A04A`).
+Design 1:1 wie die App (Gradient `#B79B78→#52A1EF→#406CFB`, Akzent `#F5A04A`).
 
 ---
 
