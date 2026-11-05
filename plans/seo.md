@@ -15,7 +15,7 @@
 - [x] Functions `seo`, `onEventWrittenSeo`, `seoSlugBackfill` deployt, Backfill gelaufen (2026-10-30)
 - [x] FTP-Inventur World4You (nur Hoster-Dateien, keine `.htaccess`) (2026-10-30)
 - [x] Abnahme Vorschau: Quelltext, Leak-Test, JSON-LD, Lighthouse (2026-10-30)
-- [ ] Google Rich Results Test manuell (Event + Breadcrumb, auch ein mehrtägiges Event)
+- [ ] Google Rich Results Test manuell (Event + Breadcrumb; mehrtägiges Event erst testbar, wenn eines live ist: aktuell keines)
 - [ ] `IOS_PROVIDER_TOKEN` in `functions/src/seo/render.ts` eintragen (Token vom Nutzer)
 - [x] Bildrechte der OG-Bilder geprüft, passen laut Lukas (2026-11-03)
 - [ ] `firestore.rules` mit Regel für `event_pages` beim nächsten Rules-Deploy mitnehmen
@@ -33,6 +33,9 @@
 - [x] Abfahrtstafel-Zeilen abgenommen (2026-11-03)
 - [x] Abfahrtstafel live auf web.app (2026-11-03)
 - [x] Design für den Livegang abgenommen („so lassen wir es fürs erste“) (2026-11-03)
+- [x] Suchtreffer-Feinschliff: JSON-LD WebSite + Organization auf der Startseite, Event-Titel mit Datum (keine doppelten Titel mehr, über 60 Zeichen: 63 → 24 von 64), Adress-Parser korrigiert (10 Events) (2026-11-05, nur Vorschau)
+- [ ] Suchtreffer-Feinschliff live: `npx firebase-tools deploy --only functions:seo,hosting`
+- [ ] Daten: Event mit Gemeinde „Kulturhaus Rothenturn“ im Manager korrigieren (Ortsname statt Veranstaltungsort)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
 - [ ] Startseiten-Performance: Hero-Screenshot als LCP (Lighthouse 81–88)
 - [ ] Eigene Hosting-Site für den Manager
