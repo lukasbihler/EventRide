@@ -89,6 +89,17 @@ function datumBereich(ev: Pick<PublicEvent, "startDay" | "endDay">): string {
   return `${datumLang(ev.startDay)} – ${datumLang(ev.endDay)}`;
 }
 
+// Fürs <title>: "7.11.2026" bzw. "7.–9.11.2026". Kurz, damit Google den Titel
+// nicht abschneidet, und Termine derselben Serie bleiben unterscheidbar.
+function datumTitel(ev: Pick<PublicEvent, "startDay" | "endDay">): string {
+  const a = parts(ev.startDay);
+  const b = parts(ev.endDay);
+  const ende = `${b.d}.${b.m}.${b.y}`;
+  if (ev.startDay === ev.endDay) return ende;
+  if (a.y === b.y && a.m === b.m) return `${a.d}.–${ende}`;
+  return `${a.d}.${a.m}.–${ende}`;
+}
+
 // Kalender-Plakette wie auf den Poster-Karten: "FR / 13 / NOV" (Jahr nur, wenn
 // es nicht das laufende ist).
 function plakette(day: string, mitJahr = false): string {
@@ -143,22 +154,31 @@ export function appLink(campaign: string, medium = "seo"): string {
 
 // "Michael-Rebernig-Platz 1, 9065 Gradnitz, Österreich"
 //   → Straße "Michael-Rebernig-Platz 1", PLZ "9065", Ort "Gradnitz".
+// Sonderfälle aus den Daten: PLZ allein ("Katschberg Str. 95, 9851"), "·" als
+// Trenner, Dorf ohne Straßennamen ("10, 9451 Preitenegg" → "Preitenegg 10"),
+// Ortsname als einzige "Straße" ("Pusarnitz" → keine Straße).
 function adressTeile(ev: PageEvent): { kurz: string; strasse: string; plz: string; ort: string } {
-  const teile = (ev.adresse || "").split(",").map((t) => t.trim())
+  const teile = (ev.adresse || "").split(/[,·]/).map((t) => t.trim())
     .filter((t) => t && !/^(österreich|oesterreich|austria|at)$/i.test(t));
-  const strasse: string[] = [];
+  const roh: string[] = [];
   let plz = "";
-  let ort = "";
+  let ortRoh = "";
   for (const t of teile) {
-    const m = t.match(/^(?:A-)?(\d{4})\s+(.+)$/);
+    const m = t.match(/^(?:A-)?(\d{4})(?:\s+(.+))?$/);
     if (m && !plz) {
       plz = m[1];
-      ort = m[2];
+      ortRoh = m[2] ?? "";
     } else if (!plz) {
-      strasse.push(t);
+      roh.push(t);
+    } else if (!ortRoh) {
+      ortRoh = t;
     }
   }
-  return {kurz: teile.join(", "), strasse: strasse.join(", "), plz, ort: ort || ev.gemeinde};
+  const ort = (ortRoh || ev.gemeinde).replace(/^Gemeinde\s+/i, "");
+  const nurOrt = [ort, ev.gemeinde].map((o) => o.toLowerCase());
+  const strasse = roh.filter((t) => !nurOrt.includes(t.toLowerCase()))
+    .map((t) => (/^\d+[a-z]?(?:\/\d+)?$/i.test(t) ? `${ort} ${t}` : t));
+  return {kurz: teile.join(", "), strasse: strasse.join(", "), plz, ort};
 }
 
 function mapsLink(ev: PageEvent): string | null {
@@ -607,8 +627,10 @@ export function renderEventPage(i: EventPageInput): string {
   const venue = ev.ort || "";
   const adr = adressTeile(ev);
   const bild = pickImage({typ: ev.typ, name: ev.name, slug});
-  const nameMitJahr = ev.name.includes(jahr(ev.startDay)) ? ev.name : `${ev.name} ${jahr(ev.startDay)}`;
-  const title = `${nameMitJahr} – Termin, Ort & Mitfahrgelegenheit | EventRide`;
+  const nameOhneJahr = ev.name.replace(new RegExp(`\\s*${jahr(ev.startDay)}$`), "");
+  const titel = `${nameOhneJahr}, ${datumTitel(ev)} – Mitfahrgelegenheit`;
+  // Google zeigt rund 60 Zeichen; den Seitennamen zeigt es ohnehin über dem Titel.
+  const title = titel.length <= 48 ? `${titel} | EventRide` : titel;
   const zeit = ev.uhrzeit ? ` ab ${ev.uhrzeit} Uhr` : "";
   const ort = ev.gemeinde ? ` in ${ev.gemeinde}` : "";
   const description = kurz(
