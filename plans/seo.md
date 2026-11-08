@@ -36,7 +36,7 @@
 - [x] Suchtreffer-Feinschliff: JSON-LD WebSite + Organization auf der Startseite, Event-Titel „{Name} 2026, Sa 7.11. – Mitfahrgelegenheit“ (keine doppelten Titel mehr, über 60 Zeichen: 63 → 41 von 64; „2026“ bleibt wörtlich drin, Nachbesserung 2026-11-08), Adress-Parser korrigiert (10 Events) (2026-11-05, nur Vorschau)
 - [x] Suchtreffer-Feinschliff live (2026-11-08)
 - [x] Krampus-Übersicht: Titel mit „Perchtenläufe“ live (2026-11-08)
-- [ ] Favicon ohne transparenten Rand (aus dem iOS-App-Icon, Google zeigt sonst einen weißen Ring) live schalten: `npx firebase-tools deploy --only hosting`
+- [x] Favicon ohne transparenten Rand (aus dem iOS-App-Icon, Google zeigt sonst einen weißen Ring) live (2026-11-08)
 - [ ] Event „Krampuslauf Seltschach“ (Arnoldstein) im Manager anlegen: 88 Impressionen ohne passende Seite (Search Console 08.11.)
 - [ ] Daten: Event mit Gemeinde „Kulturhaus Rothenturn“ im Manager korrigieren (Ortsname statt Veranstaltungsort)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
@@ -50,7 +50,7 @@
 - [x] SPF-Test: SPF, DKIM, DMARC = PASS (2026-11-03)
   > Testmail landete trotzdem im Gmail-Spam – keine DNS-Ursache, siehe Antwort im Chat
 - [x] `.github/workflows/deploy-website.yml` auf Firebase Hosting umgestellt (Dienstkonto `github-hosting-deploy`, Secret `FIREBASE_SERVICE_ACCOUNT`), Testlauf vom Branch grün (2026-11-03)
-- [ ] `feature/seo-event-pages` → `main` mergen (konfliktfrei geprüft 2026-11-03)
+- [x] `feature/seo-event-pages` → `main` gemergt, Workflow-Deploy grün (2026-11-08)
 - [x] CLAUDE.md und Memory `project_website_deploy` angepasst (2026-11-03)
 - [ ] Sitemap in der Google Search Console einreichen (Property ist aktiv: 05.–06.11. bereits 4.241 Impressionen / 80 Klicks; prüfen, ob die Sitemap unter „Sitemaps“ steht)
 
