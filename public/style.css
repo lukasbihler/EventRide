@@ -15,28 +15,37 @@
   --blue:      #4FA3FF;
 
   --text:      #EAF0FA;
-  --muted:     rgba(234,240,250,.60);
-  --faint:     rgba(234,240,250,.38);
+  --muted:     rgba(234,240,250,.84);
+  --faint:     rgba(234,240,250,.74);
   --border:    rgba(255,255,255,.08);
   --border-2:  rgba(255,255,255,.14);
 
   --glow:      rgba(140,165,200,.14);
-  --topo-op:   .3;
+  --topo-op:   .1;
 
   --maxw: 1120px;
 
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background:
-    radial-gradient(90% 55% at 70% -12%, rgba(120,150,190,.10), transparent 60%),
-    radial-gradient(60% 45% at 8% 20%, rgba(90,120,160,.07), transparent 60%),
-    radial-gradient(55% 42% at 92% 78%, rgba(247,155,61,.045), transparent 62%),
-    linear-gradient(180deg, #0C1929 0%, #0A1523 55%, #081221 100%);
+  background: transparent; /* Verlauf liegt fest auf .site::before */
   color: var(--text);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   position: relative;
   scroll-behavior: smooth;
+}
+
+/* App-Verlauf (background_widget.dart) fest am Fenster wie auf den Event-Seiten:
+   warm oben → blau unten, mit 50 % Schwarz abgedunkelt. Hellste Stelle
+   #5C4E3C, Weiß darauf 7,8:1 (WCAG AA). Eigene Ebene, weil
+   background-attachment: fixed in iOS Safari nicht funktioniert. Höhe = großer
+   Viewport, damit beim Ein-/Ausfahren der Adressleiste kein Streifen frei bleibt. */
+.site::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; z-index: -1; pointer-events: none;
+  height: 100vh; height: 100lvh;
+  background:
+    linear-gradient(rgba(0,0,0,.5), rgba(0,0,0,.5)),
+    linear-gradient(170deg, #B79B78 0%, #52A1EF 55%, #406CFB 100%);
 }
 
 /* WARM (alternative theme) */
@@ -82,7 +91,7 @@
 .topo::before {
   content: '';
   position: absolute; inset: 0;
-  background-image: url('assets/brand/topo.png');
+  background-image: url('assets/brand/topo.jpg');
   background-size: 1100px auto; background-repeat: repeat; background-position: center;
   opacity: var(--topo-op);
   pointer-events: none;
@@ -319,6 +328,9 @@
 .typ-e4 { background: rgba(244,143,177,.13); color: #F48FB1; }
 .typ-e5 { background: rgba(179,157,219,.15); color: #B39DDB; }
 .ev-foot { margin-top: 14px; color: var(--faint); font-size: .87rem; }
+.ev-all { margin-top: 22px; }
+.ev-all svg { width: 16px; height: 16px; }
+
 .ev-skel {
   height: 196px; border-radius: 22px;
   background: linear-gradient(100deg, rgba(255,255,255,.05) 35%, rgba(255,255,255,.09) 50%, rgba(255,255,255,.05) 65%);
@@ -469,26 +481,29 @@
   border: 1px solid var(--border-2); border-radius: 30px; padding: 58px 40px; text-align: center;
 }
 .dl-icon { width: 84px; height: 84px; border-radius: 21px; margin: 0 auto 26px; display: block; box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08); }
-.store-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 34px 0 26px; }
+/* Store-Buttons = Hauptaktion (groß, orange), Instagram als dezenter Textlink darunter */
+.store-row { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin: 34px 0 18px; }
 .store-btn {
-  display: flex; align-items: center; gap: 13px;
-  background: rgba(255,255,255,.04); border: 1px solid var(--border-2);
-  border-radius: 14px; padding: 13px 26px; text-decoration: none; color: var(--text);
-  transition: border-color .2s, background .2s, transform .15s;
+  display: flex; align-items: center; justify-content: center; gap: 14px; min-width: 216px;
+  background: var(--orange); border: 1px solid var(--orange); color: var(--ink);
+  border-radius: 16px; padding: 14px 28px; text-decoration: none;
+  box-shadow: 0 12px 30px -12px rgba(247,155,61,.75);
+  transition: background .15s, border-color .15s, transform .15s;
 }
-.store-btn:hover { border-color: rgba(255,154,60,.4); background: rgba(255,154,60,.05); transform: translateY(-2px); }
-.store-btn svg { width: 25px; height: 25px; flex-shrink: 0; }
+.store-btn:hover { background: var(--orange-2); border-color: var(--orange-2); transform: translateY(-2px); }
+.store-btn svg { width: 28px; height: 28px; flex-shrink: 0; }
+.store-btn svg path { fill: currentColor; } /* Play-Logo einfarbig, die Orangetöne verschwänden sonst */
 .store-btn-txt { text-align: left; line-height: 1.2; }
-.store-btn-txt small { display: block; color: var(--muted); font-size: .7rem; }
-.store-btn-txt strong { font-size: .98rem; font-weight: 600; font-family: 'Poppins', sans-serif; }
+.store-btn-txt small { display: block; color: var(--ink); font-size: 12px; font-weight: 500; }
+.store-btn-txt strong { font-size: 19px; font-weight: 700; font-family: 'Poppins', sans-serif; }
 .ig-cta {
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--orange); color: var(--ink);
-  border-radius: 100px; padding: 13px 26px; font-size: .9rem; font-weight: 700; text-decoration: none;
-  transition: background .15s, transform .15s;
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 4px;
+  color: var(--muted); font-size: 15px; font-weight: 500;
+  text-decoration: underline; text-decoration-color: rgba(234,240,250,.35); text-underline-offset: 4px;
+  transition: color .15s;
 }
-.ig-cta:hover { background: var(--orange-2); transform: translateY(-1px); }
-.ig-cta svg { width: 17px; height: 17px; }
+.ig-cta:hover { color: var(--text); text-decoration-color: var(--orange); }
+.ig-cta svg { width: 16px; height: 16px; }
 
 /* ─── FOOTER ───────────────────────────────────── */
 .footer { background: rgba(5,10,18,.5); border-top: 1px solid var(--border); padding: 40px 28px; }
@@ -502,6 +517,15 @@
 .footer-links a { color: var(--muted); text-decoration: none; font-size: .85rem; transition: color .2s; display: inline-flex; align-items: center; gap: 7px; }
 .footer-links a:hover { color: var(--text); }
 .footer-links svg { width: 15px; height: 15px; }
+/* Link-Spalten "Events nach Kategorie/Bezirk" (setzt die seo-Function ein) */
+.footer-cols {
+  order: 3; flex-basis: 100%; display: grid; grid-template-columns: repeat(2, max-content); gap: 22px 72px;
+  padding-top: 22px; border-top: 1px solid var(--border); text-align: left;
+}
+.footer-cols nav { display: flex; flex-direction: column; align-items: flex-start; }
+.footer-cols strong { font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.footer-cols a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; padding: 7px 0; }
+.footer-cols a:hover { color: var(--text); text-decoration: underline; }
 
 /* ─── MOBILE STICKY CTA BAR ────────────────────── */
 .mobile-cta {
@@ -574,6 +598,7 @@
   .dl-card { padding: 46px 22px; }
   .store-row { flex-direction: column; align-items: stretch; }
   .footer-inner { flex-direction: column; text-align: center; justify-content: center; }
+  .footer-cols { flex-basis: auto; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 16px; }
   .footer { padding-bottom: 96px; }
   .mobile-cta { display: flex; }
 }
@@ -596,11 +621,14 @@
 @keyframes rise { from { opacity: 0; transform: translateY(26px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 .hero-kicker { animation: rise .7s .05s cubic-bezier(.2,.7,.2,1) both; }
-.hero h1 { animation: rise .75s .14s cubic-bezier(.2,.7,.2,1) both; }
-.hero-sub { animation: rise .75s .26s cubic-bezier(.2,.7,.2,1) both; }
+/* Überschrift und Untertitel ohne Ausblenden (opacity) — sonst zählt der
+   größte Text erst nach der Animation als gezeichnet (LCP). */
+@keyframes riseT { from { transform: translateY(26px); } to { transform: none; } }
+.hero h1 { animation: riseT .75s .14s cubic-bezier(.2,.7,.2,1) both; }
+.hero-sub { animation: riseT .75s .26s cubic-bezier(.2,.7,.2,1) both; }
 .hero-btns { animation: rise .75s .38s cubic-bezier(.2,.7,.2,1) both; }
 .hero-trust { animation: rise .75s .5s cubic-bezier(.2,.7,.2,1) both; }
-.hero-phones { animation: fadein 1.1s .3s ease both; }
+.hero-phones { animation: riseT 1.1s .3s cubic-bezier(.2,.7,.2,1) both; }
 
 /* headline accent in logo gradient */
 .hero h1 .r {

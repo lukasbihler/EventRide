@@ -1,0 +1,294 @@
+# SEO-Plan eventride.at
+
+Stand: 30.10.2026 · Branch `feature/seo-event-pages`
+
+## Auftrag (Original)
+
+ZIEL
+eventride.at soll bei Google für Event-Namen und Kategorien in Kärnten gefunden werden
+(z. B. „Paternioner Teiflstreibn", „Krampusläufe Kärnten"). Dafür brauchen wir öffentliche,
+serverseitig gerenderte HTML-Seiten aus den Firestore-Events. Die Flutter-App bleibt unverändert.
+Termin: Schritt 1 live bis ca. 4.11.2026 – der erste Kärntner Krampuslauf ist am 6.11.
+
+KONTEXT
+- Landingpage eventride.at = statisches HTML auf Firebase Hosting. Der Abschnitt
+  „Live aus der App" lädt die nächsten 3 Events per JavaScript – Google sieht davon nichts.
+- Der Admin-Manager (eventride-cd0e9.web.app) schreibt Events nach Firestore. Bekannte Felder:
+  name, datum, uhrzeit, standort, adresse, gemeinde, bezirk, typ, veranstalter, eintritt,
+  beschreibung, Flyer-Bild. Typen laut Admin: e1 Kirchtag, e2 Feuerwehr, e3 Disco/Party,
+  e4 Ball, e5 Krampus. Es gibt mehrtägige Events. Prüfe die echten Feldnamen im Code.
+- Eintritt kann Zeilenumbrüche enthalten („VVK: 5 €" / „AK: 10 €"). Links in der
+  Beschreibung sollen klickbar sein.
+- Blaze-Plan, bestehende Cloud Functions. Firebase CLI immer über npx firebase-tools.
+
+SCHRITT 0 – ANALYSE (nichts ändern)
+Lies Repo-Struktur, firebase.json, Hosting-Setup der Landingpage, Event-Model,
+Firestore-Rules und Cloud Functions. Liefere:
+- ob Landingpage und Events im selben Firebase-Projekt bzw. derselben Hosting-Site liegen
+- die echten Event-Felder und woran man freigegebene Events erkennt (Review-Gate)
+- Architektur-Vorschlag: SSR per Cloud Function hinter Hosting-Rewrite mit CDN-Cache
+  vs. statische Generierung per Build – mit Begründung, Kosten, Risiken
+- Plan für Schritt 1 mit den betroffenen Dateien
+
+SCHRITT 1 – KERN-VERSION (Ziel 4.11.)
+a) Event-Seiten /event/{slug}
+   - Slug aus Name + Gemeinde, ohne Jahreszahl. Einmal erzeugen und im Event speichern,
+     damit er bei Namensänderungen gleich bleibt. Duplikate mit -2.
+   - Mehrere Events mit gleichem Slug (z. B. Vorjahr): Seite zeigt den nächsten kommenden
+     Termin, sonst den letzten mit Hinweis „vorbei".
+   - Nur freigegebene Events. Öffentliche Felder als Whitelist: Name, Datum, Uhrzeit,
+     Gemeinde, Bezirk, Kategorie, Beschreibung, Eintritt, Flyer-Vorschau, Anzahl
+     angebotener Fahrten (nur anzeigen ab 1). Keine Nutzerdaten.
+   - CTA: „Mitfahren oder Plätze anbieten – in der App" + Store-Links mit UTM-Parametern;
+     iOS Smart App Banner (App-ID 6770869875).
+   - SEO: Title „{Name} {Jahr} – Termin, Ort & Mitfahrgelegenheit | EventRide",
+     Meta-Description mit Datum, Uhrzeit, Gemeinde; H1; canonical; OG/Twitter mit Flyer;
+     JSON-LD Event (name, startDate, endDate, location mit address, image, description,
+     organizer) + BreadcrumbList.
+   - Interne Links: weitere Events im selben Bezirk, am selben Wochenende, gleiche Kategorie.
+b) Übersicht /krampuslaeufe-kaernten: alle kommenden Krampus-Events nach Datum, kurzer
+   Einleitungstext, gleiche SEO-Grundlagen, Links auf die Event-Seiten.
+c) Dynamische sitemap.xml (Event- und Übersichtsseiten mit lastmod) + robots.txt,
+   sauberer 404 für unbekannte Slugs.
+d) Startseite: gut sichtbarer Link auf /krampuslaeufe-kaernten.
+
+SCHRITT 2 – AUSBAU (danach)
+/kirchtage-kaernten, /partys-kaernten, /baelle-kaernten, /feuerwehrfeste-kaernten,
+/bezirk/{bezirk}, /wochenende; Event-Liste der Startseite serverseitig statt per JS.
+
+SCHRITT 3 – SPÄTER
+/eintragen-Formular ins bestehende Review-Gate; Universal/App Links für /event/…
+
+DESIGN
+Farben, Schriften und Stil wie die bestehende index.html, mobil zuerst.
+
+ARBEITSWEISE
+- Branch feature/seo-event-pages. Nach jedem Schritt stoppen, zusammenfassen,
+  auf mein OK warten.
+- Zuerst auf einem Hosting-Vorschaukanal testen (npx firebase-tools hosting:channel:deploy),
+  live erst nach meinem OK.
+
+ABNAHME
+- Event-Text steht im Seitenquelltext (View-Source), nicht erst nach JavaScript.
+- Google Rich Results Test ohne Fehler.
+- sitemap.xml erreichbar, robots.txt verweist darauf.
+- Keine privaten Felder im HTML oder in der Function-Antwort.
+- Lighthouse Mobile ≥ 90.
+
+## Entscheidungen nach Schritt 0
+
+- **Hosting:** Die Domain eventride.at zieht von World4You zu Firebase Hosting. SSR läuft per Cloud Function hinter einem Hosting-Rewrite.
+- **Slugs:** Serien-Slug plus Archiv. Ordnungszahlen („19.“) und Jahreszahlen werden aus dem Slug entfernt, damit Serien nicht jedes Jahr abreißen.
+- **Felder:** Die Adresse des Veranstaltungsorts kommt auf die Whitelist. Ohne Flyer wird ein Kategoriebild verwendet. Den Flyer-Upload bauen wir später ein, dann aber nur mit Flyern, die Veranstalter liefern oder freigeben (Urheberrecht, keine Instagram-Übernahmen).
+- **Ergänzungen:**
+  1. Vor der DNS-Umstellung die World4You-Dateien mit `public/` abgleichen (`.htaccess`, `.well-known/`, Verifizierungsdateien) und die Redirects in `firebase.json` nachbauen.
+  2. Trigger-Sicherheit: Der Slug wird nur geschrieben, wenn er fehlt. Beim Löschen eines Events bleiben die `event_pages` erhalten. Vorher wird geprüft, dass bei Bearbeitungen kein Overwrite passiert.
+  3. Manager und `/auth/` werden nicht in `robots.txt` genannt, sondern per `X-Robots-Tag: noindex` ausgeschlossen. Eine eigene Hosting-Site für den Manager folgt in Schritt 2.
+  4. Firestore-Standort prüfen. Ergebnis: nam5, deshalb bleibt die Function in us-central1.
+  5. iOS-Links haben das Format `?pt={PROVIDER_TOKEN}&ct=seo-{slug}&mt=8`. Der Token kommt später, bis dahin steht dort eine TODO-Konstante.
+  6. `index.html`: `og:url` und canonical auf `https://www.eventride.at/` setzen.
+  7. Nach der Umstellung eine Testmail an Gmail schicken und prüfen, dass SPF = PASS ist.
+
+## Schritt 0 – Analyse-Ergebnisse
+
+### Hosting / Projekt
+- **Landingpage liegt NICHT auf Firebase Hosting**, sondern auf World4You (Apache, IP 81.19.159.34). Deploy über `.github/workflows/deploy-website.yml` per FTP. Apex leitet per 301 auf `https://www.eventride.at/` um, d. h. Google kennt aktuell **www** als Hauptadresse.
+- Firebase-Projekt `eventride-cd0e9` (`.firebaserc`). `firebase.json` hat bereits `hosting.public = "public"` und liefert denselben Ordner unter eventride-cd0e9.web.app aus (Manager). Events und Hosting liegen also im **selben Projekt**, nur die Domain zeigt woanders hin.
+- DNS bei World4You (ns1/ns2.world4you.at). Geprüft: MX → `mail.eventride.at` mit eigenem A-Record 81.19.149.74, d. h. **Mail ist vom Umzug nicht betroffen**. **Keine AAAA-Records** vorhanden. Der TXT `firebase=eventride-cd0e9` existiert schon, SPF bleibt unverändert.
+- Mit umziehen müssen (alle liegen in `public/`): `datenschutz.html` (in den Stores verlinkt), `impressum.html`, `agb.html`, `auth/email-action.html` und `auth/password-reset.html` (verlinkt aus `functions/src/index.ts:1086,1180`).
+- **Entscheidung (mit dir abgestimmt):** Die Domain zieht zu Firebase Hosting, dazu eine SSR-Function hinter einem Hosting-Rewrite.
+
+### Echte Event-Felder (`events`-Collection)
+Geschrieben von `public/eventride_manager.html` (z. B. `:3392`, `:2823`, `:4294`) und `createEventContainer` (`functions/src/index.ts:1350`):
+`id, name, datum (ISO-String), uhrzeit ("HH:MM"|null), standort, gemeinde, adresse, bezirk, typ (e0–e7), eintritt (mehrzeilig), beschreibung, latitude, longitude, pinned, adminOnly, isContainer, containerId, interessentenCount, createdAt` sowie die **privaten** Felder `mgrSrcQuelleTyp`, `mgrSrcQuelleLink` und `mgrSrcIgAccount`.
+- Typen (`eventride_manager.html:508`): e1 Kirchtage/Feste, e2 Feuerwehr, e3 Disco/Party, e4 Ball, **e5 Krampus**, e6 Festival/Open-Air, e7 Sommer/Strand.
+- **Kein Flyer-Feld** auf Events (`flyerPath` gibt es nur in `eventRequests`). **Veranstalter** wird nur in `pending_events` gespeichert, bei Direkt-Uploads fehlt er. Einige ältere Events haben nur `standort`, kein `gemeinde`. Fallback: `gemeinde || standort`.
+- **Datum-Falle:** Der Manager speichert `${datum}T${uhr}:00.000Z`, also Wiener Ortszeit mit „Z“ dahinter. Freigaben über die App speichern Mitternacht UTC. → Datum aus den UTC-Komponenten lesen, Zeit aus `uhrzeit`, Offset über das vorhandene `getViennaOffsetHours()` (`functions/src/index.ts:17`).
+- **Mehrtägig:** Ein Container (`isContainer:true`) plus eigenständige Kind-Events pro Tag (`containerId`). Die Seite gehört zum Container, die Kinder bekommen keinen eigenen Slug. Fahrten hängen an den Kind-IDs.
+
+### Review-Gate
+Es gibt kein Status-Feld auf `events`. **Freigegeben = Dokument liegt in `events` und `adminOnly != true`.** Entwürfe liegen in `pending_events` bzw. `eventRequests` (status pending). Rules: `firestore.rules:162` (`events` lesbar, wenn adminOnly false).
+
+### Wichtiger Fund: Cleanup löscht Events
+`cleanupAbgelaufeneEvents` (`functions/src/index.ts:1008`) löscht Events 30 Tage nach dem Datum. Ohne Archiv würde eine Event-URL danach bis zum nächsten Jahr 404 liefern. → Archiv-Collection `event_pages` (siehe unten).
+
+### Architektur-Bewertung
+| | SSR-Function + Firebase Hosting (**gewählt**) | Statisch generieren + FTP |
+|---|---|---|
+| Aktualität | sofort (CDN-Cache 10 min) | erst nach Cron-Lauf |
+| Infrastruktur | einmalige DNS-Umstellung | kein Umzug |
+| Wartung | keine wachsenden Dateien, Schritt 2/3 (Kategorien, Bezirk, App Links) einfach | FTP-Sync eines wachsenden Dateibaums, Secret in GitHub |
+| Kosten | Blaze: Invocations + ein paar tausend Firestore-Reads pro Tag ≈ Cent-Bereich, Hosting-CDN 10 GB/Monat frei | GitHub-Minuten |
+| Risiken | SSL-Provisionierung nach DNS-Wechsel (Minuten bis Stunden), Cold Start (vom CDN abgefedert) | veraltete Daten, FTP-Fehler |
+
+---
+
+## Plan für Schritt 1 (erst nach deinem OK)
+
+### Slug-Logik (Serien-Slug + Archiv, abgestimmt)
+- `seriesKey` = normalisierter Name (+ Gemeinde): Kleinschreibung, ä→ae, ö→oe, ü→ue, ß→ss, sonstige Zeichen → `-`. **Entfernt werden Ordnungszahlen und Jahreszahlen** (Tokens `^\d+\.?$`, `(19|20)\d\d`), z. B. „19. Ebentahler Krampuslauf“ → `ebentahler-krampuslauf`.
+- Die Gemeinde wird nur angehängt, wenn kein Namens-Token mit ihrem ersten Wort beginnt. Beispiele: „Paternioner Teiflstreibn“ + Paternion → `paternioner-teiflstreibn`. „Krampuslauf“ + Ferlach → `krampuslauf-ferlach`.
+- Gleicher `seriesKey` = gleiche Serie = gleicher Slug über Jahre. `-2` gibt es nur bei einer echten Kollision: In der Serie steht bereits ein *kommender* Termin, der weder derselbe Container ist noch innerhalb von 7 Tagen liegt.
+- Der Slug wird einmal ins Event geschrieben (`slug`). Namensänderungen ändern ihn nicht.
+- **Neue Collection `event_pages/{slug}`** mit `seriesKey`, `eventIds` und einem öffentlichen Snapshot des letzten Termins (nur Whitelist-Felder) sowie `updatedAt` (für die lastmod in der Sitemap). Sie bleibt nach dem Cleanup bestehen, dann erscheint der Hinweis „vorbei“.
+
+### Trigger-Sicherheit (Ergänzung 2)
+- `onEventWrittenSeo` schreibt `slug` **nur, wenn er fehlt** und das Event weder Container-Kind noch adminOnly ist. Der eigene Write findet beim zweiten Durchlauf den Slug bereits vor, es entsteht keine Schleife. Der `event_pages`-Snapshot wird nur geschrieben, wenn sich die Whitelist-Felder tatsächlich geändert haben.
+- Beim Löschen (Cleanup oder manuell) bleibt `event_pages/{slug}`, es wird nur die ID per `arrayRemove` aus `eventIds` entfernt.
+- Geprüft: Manager (`eventride_manager.html:1925`), App (`firestore_event_repository.dart:74`) und `updateEventContainer` (`index.ts:1435`) bearbeiten nur per `update()`. Der `slug` bleibt bei Namensänderungen erhalten, dort ist keine Änderung nötig. `set()` kommt nur bei Neuanlage vor.
+
+### Öffentliche Whitelist
+Name, Datum, Uhrzeit, Gemeinde, Bezirk, **Adresse (Veranstaltungsort)**, Kategorie, Beschreibung (Links klickbar, Zeilenumbrüche erhalten), Eintritt (Zeilenumbrüche erhalten), Anzahl Fahrten (nur ab 1), Veranstalter (nur falls gesetzt). Kein Flyer in Schritt 1: Als OG- und JSON-LD-Bild dient ein Kategoriebild aus `public/assets/image/`. Die `mgrSrc*`-Felder, Koordinaten-Rohdaten und Nutzerdaten gelangen nie ins HTML.
+
+### Neue/geänderte Dateien
+- `functions/src/seo/slug.ts`: `toSeriesKey()`, Normalisierung
+- `functions/src/seo/data.ts`: lädt öffentliche Events (Memo pro Instanz, 5 min), mappt die Whitelist (`toPublicEvent()`), parst Datum und Wiener Zeit, fasst Container zusammen, zählt Fahrten per `count()`-Aggregation
+- `functions/src/seo/render.ts`: HTML-Templates (Escape, Linkify, Layout), JSON-LD `Event` + `BreadcrumbList`, Meta/OG/Twitter, canonical, Smart App Banner (`apple-itunes-app` app-id=6770869875), Store-Links (Play: `&referrer=utm_source%3Deventride.at%26utm_medium%3Dseo%26utm_campaign%3D{slug}`, iOS: `?pt={PROVIDER_TOKEN}&ct=seo-{slug}&mt=8`, Token als Konstante `IOS_PROVIDER_TOKEN` mit TODO, bis du ihn lieferst)
+- `functions/src/seo/ssr.ts`: `export const seo = onRequest(...)`, Routing für `/event/:slug`, `/krampuslaeufe-kaernten` und `/sitemap.xml`, sauberer 404 (Status 404 + Links). `Cache-Control: public, max-age=300, s-maxage=600`.
+- `functions/src/seo/slugTrigger.ts`: `onEventWrittenSeo` (onDocumentWritten `events/{id}`) vergibt den Slug per Transaktion auf `event_pages` und aktualisiert den Snapshot. Dazu `seoSlugBackfill` (onSchedule täglich, einmal manuell in der Cloud Console anstoßen), der bestehende Events nachzieht und verpasste Trigger heilt. `onEventUpdated` (`index.ts:916`) ignoriert reine Slug-Änderungen bereits.
+- `functions/src/index.ts`: Exporte ergänzen
+- `firebase.json`: Rewrites `/event/**`, `/krampuslaeufe-kaernten` und `/sitemap.xml` → `{function:{functionId:"seo", region:"us-central1"}}`. Firestore liegt in **nam5** (US), deshalb bleibt die Function in us-central1, Europa würde die Latenz nur verschlechtern. Header-Caching für statische Assets. **`X-Robots-Tag: noindex`** für `/eventride_manager.html` und `/auth/**`. Weiterleitungen aus der Server-`.htaccess` (falls vorhanden) als `redirects` nachbauen. **Kein `cleanUrls`**, damit `/datenschutz.html` und `/auth/*.html` unverändert bleiben.
+- `firestore.rules`: `event_pages` → `allow read, write: if false` (nur Admin SDK)
+- `public/robots.txt`: `Allow: /` + `Sitemap: https://www.eventride.at/sitemap.xml`. Manager und `/auth/` werden dort **nicht** genannt. Eine getrennte Hosting-Site für den Manager kommt in Schritt 2.
+- Fehlende Server-Dateien (s. Ergänzung 1) nach `public/` übernehmen
+- `public/seo.css`: Tokens, Fonts und Karten aus `public/style.css`, mobil zuerst, kein JS
+- `public/index.html`: gut sichtbarer Link „Krampusläufe in Kärnten“ im Events-Abschnitt + Nav, `og:url` → `https://www.eventride.at/`, `<link rel="canonical" href="https://www.eventride.at/">`
+- `.github/workflows/ftp-inventory.yml` (temporär, nur lesend): Trigger per Push auf `feature/seo-event-pages`, `lftp` listet das Server-Verzeichnis rekursiv inkl. Dotfiles und lädt `.htaccess`, `.well-known/` und Verifizierungsdateien als Actions-Artefakt hoch. Danach Abgleich mit `public/` und Workflow wieder löschen. Das GitHub-Secret `FTP_PASS` landet dabei nicht im Log.
+- `.github/workflows/deploy-website.yml`: erst nach der DNS-Umstellung von FTP auf `FirebaseExtended/action-hosting-deploy` umstellen (Secret `FIREBASE_SERVICE_ACCOUNT`). Bis dahin bleibt FTP als Rollback.
+- Danach: `CLAUDE.md` (Hosting-Abschnitt) und Memory `project_website_deploy` aktualisieren
+
+### Seiten-Inhalte
+- **/event/{slug}:** Title „{Name} {Jahr} – Termin, Ort & Mitfahrgelegenheit | EventRide“, die Meta-Description nennt Datum, Uhrzeit und Gemeinde. Dazu H1, Detailblock, CTA „Mitfahren oder Plätze anbieten – in der App“. Angezeigt wird der nächste kommende Termin, sonst der letzte mit Hinweis „vorbei“ (gleiche Regel wie `eventHideAfter`: 6:00 am Folgetag). Interne Links: gleicher Bezirk, gleiches Wochenende (Fr–So) und gleiche Kategorie, je max. 4.
+- **/krampuslaeufe-kaernten:** alle kommenden `typ == e5`, nach Datum, mit Einleitungstext, `ItemList`-JSON-LD und Breadcrumb
+- **sitemap.xml:** Startseite, Übersicht und alle `event_pages` (auch die „vorbei“-Seiten, sie ranken fürs nächste Jahr) mit lastmod
+- Canonical-Domain: **https://www.eventride.at** (behält den aktuellen Index, Apex → 301 auf www in Firebase)
+
+### Ablauf und Termine
+1. **30./31.10.:** Code schreiben, `npm run build` in `functions/`, Function deployen (`npx firebase-tools deploy --only functions:seo,functions:onEventWrittenSeo,functions:seoSlugBackfill,firestore:rules`). **Hinweis:** Der Trigger schreibt danach `slug` in Produktions-Events. Die App ignoriert unbekannte Felder. Backfill einmal ausführen.
+2. FTP-Inventur (Ergänzung 1): Dateien, die nur auf dem Server liegen, übernehmen und `.htaccess`-Regeln nachbauen
+3. Vorschau: `npx firebase-tools hosting:channel:deploy seo-preview` → Prüfung (s. u.) → **Stopp, dein OK**
+4. **1.11. (nach OK):** Domain verbinden: Firebase Console → Hosting → Custom Domain `www.eventride.at` + `eventride.at` (Redirect auf www) → bei World4You **nur** die A-Records von `@` und `www` ändern. MX und `mail` bleiben unangetastet, keine AAAA anlegen. Warten bis SSL aktiv. Rollback: A-Records zurück auf 81.19.159.34.
+5. Danach prüfen: Datenschutz-URL, `auth/*.html` (Passwort-Reset testen), Mail-Versand und -Empfang. GitHub-Workflow umstellen, Sitemap in der Search Console einreichen.
+6. **Ab 2.11.:** Puffer, live spätestens am 4.11.
+
+## Verifikation (Abnahme)
+- `curl -s https://<preview>/event/<slug> | grep "<Eventname>"`: Der Event-Text steht im Quelltext, kein JS nötig.
+- Den gesamten HTML-Output und die Antworten nach `mgrSrc`, `QuelleLink`, `igAccount` und `userId` durchsuchen → 0 Treffer.
+- Google Rich Results Test (Event + Breadcrumb) für 2–3 Event-Seiten ohne Fehler, darunter eine mehrtägige.
+- `/sitemap.xml` gültig, `robots.txt` verweist darauf, ein unbekannter Slug liefert HTTP 404.
+- Lighthouse Mobile ≥ 90 (Event-Seite + Übersicht).
+- Nach der DNS-Umstellung: `Resolve-DnsName` (A, MX), HTTPS ok, `/datenschutz.html` 200, Passwort-Reset-Link funktioniert, `X-Robots-Tag` am Manager gesetzt.
+- Testmail von `@eventride.at` an Gmail senden und im Original-Header **SPF = PASS** prüfen (dazu auch eine Mail über `_spf.firebasemail.com`, z. B. Passwort-Reset).
+
+---
+
+## Stand Schritt 1 (30.10.2026), bereit für die DNS-Umstellung
+
+**Deployt (Produktion, unsichtbar bis zur DNS-Umstellung):** Functions `seo`, `onEventWrittenSeo` und `seoSlugBackfill` (Node 22, us-central1). Der Backfill ist gelaufen: 57 Events geprüft, 49 Event-Seiten in `event_pages`.
+**Vorschau:** https://eventride-cd0e9--seo-preview-eukxkzyl.web.app (bis 6.11.)
+
+**Abnahme auf der Vorschau**
+- Der Event-Text steht im Quelltext (H1, Fakten, Beschreibung, JSON-LD), es ist kein JS nötig.
+- Leak-Test über alle 51 URLs gegen 45 echte private Werte (`mgrSrcQuelleLink`/`mgrSrcIgAccount`): 0 Lecks. Der einzige Treffer war ein Ticket-Link, der ohnehin in der öffentlichen Beschreibung steht.
+- JSON-LD auf allen Seiten gültig. Den Rich Results Test von Google noch manuell durchführen.
+- Lighthouse Mobile: Performance 100, Barrierefreiheit 100, Best Practices 100. SEO 69 nur wegen `X-Robots-Tag: noindex`, das Firebase auf Vorschaukanälen erzwingt.
+- Sitemap 200, `robots.txt` 200, unbekannter Slug liefert 404, Großschreibung und abschließender Slash liefern 301.
+
+**Abweichungen vom Plan**
+- `firestore.rules` wurde nicht deployt. `event_pages` ist ohne Catch-all-Regel ohnehin für Clients gesperrt, die Regel geht mit dem nächsten regulären Rules-Deploy mit.
+- CSS wird inline ausgeliefert (`functions/src/seo/styles.ts`) statt über `public/seo.css`, wegen des LCP.
+- Node 20 wurde am 30.10.2026 abgeschaltet, deshalb wurde `functions/package.json` auf Node 22 umgestellt. **Die übrigen Functions laufen noch auf Node 20 und lassen sich erst nach einem Deploy auf Node 22 wieder ändern.**
+- FTP-Inventur: Auf dem Server liegen nur Hoster-Dateien (`error/`, `stats/`), keine `.htaccess`, kein `.well-known/`. `index.html` und `style.css` auf dem Server sind identisch mit `main`.
+
+**Offen**
+- `IOS_PROVIDER_TOKEN` in `functions/src/seo/render.ts` (TODO)
+- Bildrechte der OG-Bilder prüfen: `krampus.jpg` ist ein Instagram-Screenshot, das Feuerwehrfoto zeigt ein Kennzeichen.
+- DNS-Umstellung, danach Workflow auf Firebase Hosting umstellen, CLAUDE.md anpassen, Sitemap in der Search Console einreichen, SPF-Test.
+- **Merge-Reihenfolge:** `main` erst nach der DNS-Umstellung mergen. Sonst deployt der FTP-Workflow die neue `index.html` mit Links auf `/krampuslaeufe-kaernten`, und die liefern bei World4You 404.
+
+## Erweiterung Schritt 1b (30.10.2026): alle Kategorien, App-Optik
+
+Auf Wunsch vor der DNS-Umstellung ergänzt (zieht Teile von Schritt 2 vor):
+
+- **Übersichtsseiten** (`functions/src/seo/hubs.ts`, eine Vorlage `renderHubPage`):
+  - `/events-kaernten` (alle), `/wochenende-kaernten` (Fr–So, nach Tag gruppiert)
+  - Kategorien = App-Typen: `/kirchtage-kaernten` (e1), `/feuerwehrfeste-kaernten` (e2), `/partys-kaernten` (e3), `/baelle-kaernten` (e4), `/krampuslaeufe-kaernten` (e5), `/festivals-kaernten` (e6), `/sommerfeste-kaernten` (e7)
+  - Themen über den Eventnamen: `/halloween-kaernten`, `/silvester-kaernten`, `/fasching-kaernten`, `/maturabaelle-kaernten`, `/zeltfeste-kaernten`, `/oktoberfeste-kaernten`
+  - Bezirke: `/events-klagenfurt`, `-klagenfurt-land`, `-villach`, `-villach-land`, `-spittal`, `-st-veit`, `-wolfsberg`, `-voelkermarkt`, `-feldkirchen`, `-hermagor`
+  - Jede Seite zeigt kommende Termine und „Bisherige Termine“ aus `event_pages` (bis 400 Tage zurück). Ohne beides: `noindex`, nicht in Sitemap, Chips und Footer.
+- **Optik:** Website-Look (Navy, Karten, Faktenblock, Store-Buttons wie `public/style.css`). Erster Versuch 1:1 im App-Look (Verlauf, große Bildkarten) war dem Nutzer zu viel → zurückgenommen. App-Anklang nur noch dezent: Kategoriebild gedämpft im Kopfbereich (nach unten ausgeblendet) und als schwacher Schimmer rechts in den Karten, farbige App-Icons im Faktenblock, Kategorie-Chips, Link „In Google Maps öffnen“.
+- **Bilder:** App-Kategoriebilder aus `assets/image/` (Lizenz laut Nutzer ok) als `public/assets/og/{kirchtag,feuerwehr,disco,ball,krampus,festival,beach}.jpg` (1200×630) und `-640.jpg` (Karten, mobiler Hero). Krampus-Bild so zugeschnitten, dass die „1/2“-Einblendung wegfällt.
+- **Startseite:** Chip-Leiste aller Kategorien statt des Krampus-Buttons, Nav-Link „Eventkalender“ → `/events-kaernten`.
+- **Hosting:** Rewrite per Regex `^/(events-[a-z-]+|[a-z-]+-kaernten)/?$` → `seo`.
+- **Performance:** HTML wird in der Function mit Brotli/Gzip gepackt (52 KB → 7 KB), Kopfbild mobil immer 640 px (`<picture>`), Logo 64 px.
+- **Abnahme Vorschau:** Lighthouse Mobile Event-Seite, `/events-kaernten`, `/krampuslaeufe-kaernten` je 100/100/100 (SEO 69 nur wegen Vorschau-noindex). Leak-Test 81 URLs gegen 47 private Werte: nur der bekannte, öffentlich beschriebene Ticket-Link.
+
+## Schritt 2b (30.10.2026): Design näher an der App + Korrekturen
+
+Umgesetzt laut Auftrag 2b, nur auf dem Vorschaukanal:
+
+- **Ablauf Vorschau:** `bash scripts/deploy_seo_preview.sh` deployt nur die Function `seoNext` (gleicher Code wie `seo`) und den Kanal `seo-preview` mit einer temporären `firebase.preview.json`, deren Rewrites auf `seoNext` zeigen. Die Live-Function `seo` bleibt unverändert.
+- **Livegang nach OK:** `npx firebase-tools deploy --only functions:seo,functions:onEventWrittenSeo,functions:seoSlugBackfill,hosting` (Trigger/Backfill wegen neuem Snapshot-Feld `ort`; danach schreibt der Backfill alle `event_pages` einmal neu).
+- **Eventkarten** wie `eventcard_widget.dart`: Bild sichtbar, Verlauf nur links, Titel/Datum („Sa. 31.10. · 21:00“)/Gemeinde, feste Höhe, 1 bzw. 2 Spalten. Badge nur auf gemischten Listen (Alle, Bezirk, Wochenende, Startseite, verwandte Events außer Kategorie).
+- **Filter-Pills** „Alle“, „Typ ▾“, „Datum ▾“ (Wochenende + Themen), „Bezirk ▾“ als `<details>`, Links mit `#events`, nur Seiten mit Inhalt.
+- **Übersichtsseiten:** H1, ein Satz, Filter, Liste; Einleitung als „Über …“ unter der Liste.
+- **Event-Seite** wie die Infos-Seite: eine Glas-Karte (Titel, Datum+Uhrzeit, Adresse, „Zum Event navigieren“, „{n} wollen hin“ aus `interessentenCount`, Fahrten ab 1, Beschreibung, Eintritt, Veranstalter). App-Buttons „Fahrten finden“/„Fahrt anbieten“ (am Handy fix unten, per JS direkt in den Store), kleine Store-Badges.
+- **Hintergrund:** App-Verlauf mit 45 % Schwarz; html-Hintergrund = hellste Stelle (#655542), Weiß darauf 6,6:1, auf Glas 5,3:1.
+- **Startseite serverseitig:** `public/index.html` → `public/home.html` (Vorlage mit `<!--seo:filter-->`/`<!--seo:events-->`), Rewrite `/` → Function. Die Function holt `home.html` + `style.css` über das Hosting derselben Domain (Allowlist), setzt 6 Events + Filter ein und liefert das CSS inline. `/home.html` hat `X-Robots-Tag: noindex`. Das Client-Skript für Live-Events ist entfernt. **CLAUDE.md nach dem Merge anpassen (index.html → home.html).**
+- **Startseite Performance:** Fonts nicht blockierend, Hero-Text/-Handys ohne opacity-Animation (LCP), Screenshot 504 px + fetchpriority, `topo.png` (1,5 MB) → `topo.jpg` (37 KB), `favicon-192.png` statt 916-KB-Favicon, kleine Logos.
+- **Strukturdaten:** kein `endDate` bei eintägigen Events (mehrtägig: letzter Tag), Adresse in `streetAddress`/`postalCode`/`addressLocality`, `location.name` = Veranstaltungsort (`standort`), sonst Gemeinde.
+- **Abnahme Vorschau (Lighthouse Mobile):** Event-Seite, `/events-kaernten`, `/partys-kaernten`, `/wochenende-kaernten` 93–100 / 100 / 100. Startseite 100/100/100 bei warmem CDN-Cache, 77–81 Performance bei Cache-MISS (Function holt Vorlage); alte Startseite: 64. SEO 69 überall nur wegen Vorschau-noindex. Leak-Test 85 URLs: nur der bekannte Ticket-Link.
+
+## Schritt 2c (31.10.2026): Design-Überarbeitung
+
+Nur Vorschaukanal (`seoNext`), live erst nach OK. URLs, SEO-Struktur und Strukturdaten unverändert (Event-Bild jetzt die Variante unter `/assets/image/…`).
+
+- **Überall:** App-Verlauf fest am Fenster (auch Startseite inkl. Hero, `.site::before`), gleiche Navigation wie die Startseite (SEO-Seiten: Mobilmenü als `<details>`), Inhaltsbreite 1120 px, Karten-Hover (3 px anheben, orangener Schatten, Bild-Zoom) nur bei `hover: hover` und gleich bei `:focus-visible`.
+- **Eventkarten** (`CARD_CSS`, auch in die Startseite eingesetzt): ab 640 px Poster (Bild 16:9, Datums-Plakette, Chip nur gemischt, Glas mit Titel 2 Zeilen, Uhrzeit, Ort, Fußzeile „n Fahrten · m wollen hin“), am Handy App-Karte mit 2-zeiligem Titel. Grid 1/2/3 Spalten (640/1024).
+- **Tagesgruppen** „Heute“, „Morgen“, „Samstag, 31. Oktober“ (Wiener Zeit) mit Anzahl, am Desktop sticky; innerhalb eines Tages nach Uhrzeit sortiert, Karte zeigt nur die Uhrzeit.
+- **Fahrten pro Event** aus einer einzigen `fahrten`-Abfrage (`select("eventId")`, 5-min-Memo) statt einer Zählung pro Seite.
+- **Bildvarianten:** `public/assets/image/{kategorie}/{n}.jpg` (1200×630) und `{n}-640.jpg` (640×360), Auswahl per FNV-Hash des Slugs. Neue Bilder in `public/assets/image/{kategorie}/neu/` legen, dann `powershell -ExecutionPolicy Bypass -File scripts/seo_bilder.ps1` (erzeugt Varianten, schreibt `functions/src/seo/bilder.ts`, verschiebt Originale nach `seo_bilder_original/`, nicht im Git) und Function neu deployen.
+- **Filter:** eine Zeile, am Handy horizontal scrollbar (Dropdowns hängen am äußeren Wrapper, damit sie nicht abgeschnitten werden).
+- **Event-Seite:** Glasfläche mit Header-Bild (Handy 160 px, ab 640 px 21:9), Chip/Titel/Gemeinde, Info-Kacheln Wann/Wo/Eintritt/Veranstalter/Infos (leere entfallen, „Beginn ab …“ in der Beschreibung entfällt, wenn gleich der Uhrzeit). Ab 1024 px rechte Spalte „Mitfahren“ (sticky) mit Zahlen, Buttons, QR-Code, Store-Badges. Handy: fixe Leiste (≤ 64 px), Store-Badges klein am Seitenende.
+- **Neue Route `/app?c=…&m=…`:** 302 je nach User-Agent in App Store (ct) bzw. Play Store (utm_medium), sonst `/#download`; `private, no-store`, `noindex`. QR-Code (Paket `qrcode`, SVG serverseitig) zeigt auf `https://www.eventride.at/app?c=seo-{slug}&m=qr` – funktioniert erst nach der DNS-Umstellung. App-Buttons verlinken ebenfalls auf `/app` (kein JS mehr nötig).
+- **Abnahme Vorschau (Lighthouse Mobile):** Startseite 94/100/100, Event-Seiten 94–97/100/100, Übersichten 100/100/100, CLS ≤ 0,008. JSON-LD gültig. SEO 69 nur wegen Vorschau-noindex.
+
+## Schritt 2d (31.10.2026): Bilder je nach Seitentyp
+
+Nur Vorschaukanal (`seoNext`), live erst nach OK. URLs, SEO-Struktur und Strukturdaten unverändert.
+
+- **A – Dezentes Kopfbild** auf Kategorie-, Themen- und Event-Seiten (`kopfbild()` in `render.ts`, `.head-bg`): `<img alt="">` hinter Breadcrumb/H1/Intro bzw. der Glasfläche, 220 px Handy / 360 px ab 640 px, max. 1440 px breit, per `mask-image` nach unten und zu den Seiten ausgeblendet. Deckkraft 35 % + `brightness(.6)`: Weiß auf dem ungünstigsten Fall (rein weißes Pixel über #655542) 5,1:1. Event-Seite: 21:9-Bild entfällt, die Glasfläche (`.glass-img`, `backdrop-filter: blur brightness(.85)`) liegt über dem Bild, darüber bleibt ein Streifen frei (32/72/110 px).
+- **B – Kompakte Glas-Boxen** (`eventBox()`, `.eb`) auf Kategorie- und Themenseiten: Plakette mit Uhrzeit (dunkles Glas, sonst nur 4,3:1 laut Lighthouse), Titel 2 Zeilen, Ort, „n Fahrten · m wollen hin“ (nur > 0), Pfeil. Ohne Uhrzeit: „Zeit offen“. „Bisherige Termine“ ebenfalls als Box, Plakette mit Tag, Monat und Jahr. 1 Spalte Handy, 2 ab 640 px.
+- **C – Gemischte Listen** (Startseite, Alle, Bezirke, Wochenende, „Weitere Events“): Poster-Karten wie bisher, kein Kopfbild.
+- **Hover** für Boxen und Poster gleich: 2 px anheben, `0 8px 28px` Orange 25 %, Rand orange getönt, 200 ms. Nur `hover: hover` bzw. `:focus-visible`; bei `prefers-reduced-motion` ohne Bewegung. Bild-Zoom entfällt.
+- **D – `pickImage(event)`** (`hubs.ts`): zuerst ein Themenbild (Feld `image` beim Thema, letzter Parameter von `themaHub`), sonst das Kategoriebild; Übersichtsseiten über `hubBild(hub)`. Ein Themenbild greift erst, wenn `bilder.ts` Varianten dafür zählt: Bilder unter `public/assets/image/{thema}/neu/` ablegen, `scripts/seo_bilder.ps1` ausführen (verarbeitet jetzt jeden Ordner dort), `image` setzen, deployen.
+- **Abnahme Vorschau (Lighthouse Mobile):** `/krampuslaeufe-kaernten` 94/100/100, `/halloween-kaernten` 100/100/100, Event-Seite 95/100/100, `/events-kaernten` 94/100/100, CLS ≤ 0,01. Startseite 83–88: Das LCP-Bild (Hero-Screenshot) lädt nach dem Hosting-Redeploy langsamer. A/B lokal Stand 2c gegen 2d: beide 80, also keine Regression. JSON-LD gültig, Leak-Test 85 URLs: nur der bekannte Ticket-Link.
+- **Nachtrag Filter:** Filter-Links ohne `#events` (ändert die Vorgabe aus 2b). Der Anker schob Filter und erste Events unter die fixe Navigation, die Zielseite startet jetzt oben. Seitenwechsel per Cross-Document View Transition: Die Navigation bleibt stehen, der Inhalt blendet in 0,18 s über. Gilt auch auf der Startseite (über `CARD_CSS`), bei `prefers-reduced-motion` aus.
+- **Nachtrag Handy-Scrollen:** Ein hellbrauner Bereich unten beim Scrollen kam vom html-Hintergrund #655542, der durchblitzt, solange noch nicht alles gezeichnet ist. Jetzt sind html-Hintergründe dunkel (SEO-Seiten #233B8A, Startseite #20367E), die feste Verlaufsebene hat `100lvh` Höhe (Adressleiste) und die Glas-Boxen kein `backdrop-filter` mehr (Ruckeln). Den ungünstigsten Kontrastfall mit Lighthouse prüfen: html lokal auf #655542 setzen.
+- **Nachtrag Übergänge:** Speculation Rules (`SPECULATION` in `render.ts`, auch auf der Startseite): Interne Links werden beim Antippen bzw. Hover vorab geladen (Chrome/Edge), App-Buttons (`rel=nofollow`) sind ausgenommen. Die View Transition dauert 0,26 s, Navigation und Filterleiste bleiben stehen.
+- **Offen:** Poppins (`display=optional`) verursacht in ca. 1 von 4 Lighthouse-Läufen auf der Event-Seite CLS 0,24, wenn der Font gerade noch rechtzeitig kommt. Das bestand schon vorher. Abhilfe: Fallback-Font mit angepassten Metriken (`size-adjust`) oder Font-Preload.
+- **Nachtrag Schrift (Karten wie iOS-App):** Poster-Karten und Glas-Boxen in der Systemschrift (auf dem iPhone SF Pro wie die App, `main.dart`), Abstufung wie `eventcard_widget.dart`: Titel 800, Datum/Uhrzeit 300 (`.pc-when`), Ort 400, Zahlen klein. Gedimmt wird über Stärke und Größe, die Farbe bleibt bei 91 % Weiß (4,7:1 auf Glas). 70 % wie in der App ergäbe nur 3,5:1.
+- **CLS-Fix Poppins:** `@font-face` „Poppins Fallback“ (Arial) und „Poppins Fallback Roboto“ mit `size-adjust`/`ascent-`/`descent-`/`line-gap-override` aus `@capsizecss/metrics`. Event-Seite in 4 von 4 Läufen CLS 0 (vorher in 1 von 4 Läufen 0,24).
+- **Korrektur Startseite:** `html { background }` in `public/style.css` wieder entfernt. Die Startseite setzt ihre Grundfarbe inline am `<body>` (#3A3F55). Mit eigenem html-Hintergrund malt der Body über der festen Verlaufsebene (z-index −1), die Seite wurde grau. Auf den SEO-Seiten hat der Body keinen Hintergrund, dort bleibt #233B8A.
+- **Korrektur Kartenschrift:** Die Systemschrift (Titel 800) war schlecht lesbar, deshalb zurück zu Poppins mit Abstufung: Titel 600 (Handy 1,12rem, Desktop 1,06rem), Uhrzeit 500, Ort 400, Zahlen 0,8rem, alles bei 91 % Weiß. Poppins-Ersatzschrift jetzt in `CARD_CSS` (auch Startseite). Neue Schnitte: Poppins 500 auf den SEO-Seiten, 400 auf der Startseite.
+
+## Schritt 2d – Feinschliff (01.11.2026)
+
+Nur Vorschaukanal (`seoNext`), live erst nach OK. „Was geht in Kärnten?“, Aufbau von `/events-kaernten` und die Mitfahren-Spalte unverändert.
+
+- **Poster-Karten** (`CARD_CSS`, auch Startseite): Titel 18 px / 700 (Poppins 700 neu geladen), max. 2 Zeilen, 16 px Abstand zum Bild. Uhrzeit und Ort 15 px / 500 in 96 % Weiß, Icons 16 px. Textbereich dunkles Glas `rgba(16,20,32,.58)` (12:1), am Handy dunklerer Bildverlauf.
+- **Detailseite:** Kopf mit Kategorie-Chip, Alters-Badge (`alterAbtrennen()`: nur die letzte Zeile der Beschreibung, „Eintritt/Einlass/Zutritt … ab NN (Jahren)“, 6–21; Zeile entfällt, JSON-LD bekommt `typicalAgeRange`), H1, Zeile „Gemeinde · Bezirk-Link · n wollen hin“ (darunter bis 1023 px auch „n Fahrten“, weil die Mitfahren-Spalte dort nicht daneben steht). Fakten-Leiste „Datum und Uhrzeit“ (Plakette + Wochentag + Uhrzeit), „Adresse“ (Veranstaltungsort, Straße, PLZ + Ort, Link „Navigieren“), „Eintritt“ (`eintrittTeile()`: Label | Betrag, reine Zahlen mit €, Links als Button „Tickets“ bzw. „WhatsApp-Kanal“, `rel="nofollow noopener"`; leer → Kachel entfällt). Handy untereinander, ab 640 px nebeneinander, Höhe nach Inhalt. Danach Abschnitt „Beschreibung“ (17 px, 1,6, max. 65ch, Links #FFD09A = aufgehellte Akzentfarbe, 4,7:1) und „Veranstalter: …“ (die Kachel entfällt).
+- **Schärfe bei DPR 1:** nur ganze Pixel bei Schrift, Abständen und Icons, Text unter 15 px mit ≥ 500, kein `transform` im Ruhezustand (Kopfbild und Kartenpfeil zentrieren jetzt ohne translate), Ränder 1 px, Glas-Boxen fast deckend ohne `backdrop-filter`, sticky Tagesüberschrift ohne `backdrop-filter`. Chrome glättet Text nur auf deckendem Grund mit Subpixeln, deshalb bei `max-resolution: 1.99dppx` deckende Mischfarben für `.eb` und `.pc`. Geprüft per Skript (computed styles aller Box-/Karten-Elemente, DPR 1): keine Treffer.
+- **Kleinigkeiten:** Blöcke auf der Event-Seite mit nur einer Kategorie als Glas-Boxen (Plakette mit Datum, Uhrzeit als Zeile), gemischte als Poster. Startseite: Store-Buttons groß und orange (Play-Logo einfarbig), Instagram als Textlink. Footer-Spalten „Events nach Kategorie/Bezirk“ auch auf der Startseite (Marker `<!--seo:footer-->`, `footerSpalten()`). Impressum/Datenschutz/AGB sind statisch und bleiben wie sie sind.
+- **Abnahme Vorschau (Lighthouse Mobile):** Event-Seiten 90–96, `/krampuslaeufe-kaernten` 92, `/events-kaernten` 89–96 (live gleich: 90–95), CLS 0, Kontrast 100 %. Startseite 71–80, live im selben Lauf 74–97 bei identischen 595 KB: Netzschwankung plus bekanntes Hero-LCP, keine Regression. JSON-LD auf 82 Seiten gültig, Leak-Test nur der bekannte Ticket-Link.
+
+## Suchtreffer-Feinschliff (05.11.2026)
+
+Audit der Live-Seite über alle 83 Sitemap-URLs: Status, Canonical, robots, H1, JSON-LD und interne Links ohne Fehler; Lighthouse SEO 100. Umgesetzt, zuerst nur Vorschaukanal:
+
+- **Startseite:** JSON-LD `WebSite` + `Organization` direkt in `public/home.html` (Grundlage für Seitenname und Logo im Suchtreffer).
+- **Event-Titel:** `{Name} {Jahr}, {Wochentag} {T.M.} – Mitfahrgelegenheit`, `| EventRide` nur bis 60 Zeichen gesamt. Ersetzt „{Name} {Jahr} – Termin, Ort & Mitfahrgelegenheit | EventRide“ und löst den doppelten Titel der TAK-TAK-Friday-Termine. Über 60 Zeichen: 63 → 41 von 64. Erst war das Jahr im Datum versteckt („7.11.2026“). Am 08.11. zurückgeändert, weil die Search Console Suchen wie „krampuslauf bleiburg 2026“ zeigt.
+- **`adressTeile()`:** PLZ allein, „·“ als Trenner, Dorf ohne Straßennamen („10, 9451 Preitenegg“ → „Preitenegg 10“), Ortsname als einzige Straße entfällt, „Gemeinde “ vor dem Ort entfällt. 10 Events betroffen, wirkt auch auf die Adress-Kachel.
+- **Bewusst nicht:** `offers`, `organizer`, `performer`, `endDate` bleiben optional: kein Veranstalter in den Daten, Eintritt ist Freitext. Der Rich Results Test zeigt dafür nur Hinweise, keine Fehler. Startseiten-Performance (Lighthouse 74–95, `styleLayout` auf gedrosselter CPU) bleibt ein eigener Punkt, SEO-Note dort 100.
+
+**Search Console 08.11.2026 (Daten bis 06.11.):** Seit dem Domain-Umzug 04.11.: 48 → 1.177 → 3.064 Impressionen pro Tag (vorher 3–9), 80 Klicks, Position im Schnitt 6,5–6,8, 93 % Handy, 96 % Österreich. Top-Seiten: `/event/jaklinger-krampuslauf-st-andrae` 19 Klicks / 407 Impressionen, `/krampuslaeufe-kaernten` 14 / 1.557 (CTR 0,9 %, größter Hebel). Suchanfragen fast alle „{Ort} krampuslauf 2026“.

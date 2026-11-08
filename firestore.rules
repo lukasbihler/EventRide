@@ -260,6 +260,15 @@ service cloud.firestore {
     }
 
     // ----------------------------------------------------------------
+    // event_pages/{slug}  (SEO-Archiv der öffentlichen Event-Seiten)
+    //
+    // Nur Cloud Functions (Admin SDK) — kein Client-Zugriff.
+    // ----------------------------------------------------------------
+    match /event_pages/{slug} {
+      allow read, write: if false;
+    }
+
+    // ----------------------------------------------------------------
     // ig_accounts/{docId}  (Instagram-Recherche-Tracking)
     //
     // Lesen/Schreiben: Nur Manager (internes Tool)
