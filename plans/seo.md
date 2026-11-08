@@ -33,7 +33,7 @@
 - [x] Abfahrtstafel-Zeilen abgenommen (2026-11-03)
 - [x] Abfahrtstafel live auf web.app (2026-11-03)
 - [x] Design für den Livegang abgenommen („so lassen wir es fürs erste“) (2026-11-03)
-- [x] Suchtreffer-Feinschliff: JSON-LD WebSite + Organization auf der Startseite, Event-Titel mit Datum (keine doppelten Titel mehr, über 60 Zeichen: 63 → 24 von 64), Adress-Parser korrigiert (10 Events) (2026-11-05, nur Vorschau)
+- [x] Suchtreffer-Feinschliff: JSON-LD WebSite + Organization auf der Startseite, Event-Titel „{Name} 2026, Sa 7.11. – Mitfahrgelegenheit“ (keine doppelten Titel mehr, über 60 Zeichen: 63 → 41 von 64; „2026“ bleibt wörtlich drin, Nachbesserung 2026-11-08), Adress-Parser korrigiert (10 Events) (2026-11-05, nur Vorschau)
 - [ ] Suchtreffer-Feinschliff live: `npx firebase-tools deploy --only functions:seo,hosting`
 - [ ] Daten: Event mit Gemeinde „Kulturhaus Rothenturn“ im Manager korrigieren (Ortsname statt Veranstaltungsort)
 - [ ] Themenbilder liefern und mit `scripts/seo_bilder.ps1` einbauen
@@ -49,7 +49,7 @@
 - [x] `.github/workflows/deploy-website.yml` auf Firebase Hosting umgestellt (Dienstkonto `github-hosting-deploy`, Secret `FIREBASE_SERVICE_ACCOUNT`), Testlauf vom Branch grün (2026-11-03)
 - [ ] `feature/seo-event-pages` → `main` mergen (konfliktfrei geprüft 2026-11-03)
 - [x] CLAUDE.md und Memory `project_website_deploy` angepasst (2026-11-03)
-- [ ] Sitemap in der Google Search Console einreichen
+- [ ] Sitemap in der Google Search Console einreichen (Property ist aktiv: 05.–06.11. bereits 4.241 Impressionen / 80 Klicks; prüfen, ob die Sitemap unter „Sitemaps“ steht)
 
 ## Schritt 3 – später
 - [ ] Nach dem Livegang: Schutz gegen automatisches Abgreifen der Event-Daten (Scraping durch andere Apps/Seiten) prüfen und ggf. umsetzen
