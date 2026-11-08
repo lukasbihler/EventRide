@@ -89,15 +89,15 @@ function datumBereich(ev: Pick<PublicEvent, "startDay" | "endDay">): string {
   return `${datumLang(ev.startDay)} – ${datumLang(ev.endDay)}`;
 }
 
-// Fürs <title>: "7.11.2026" bzw. "7.–9.11.2026". Kurz, damit Google den Titel
-// nicht abschneidet, und Termine derselben Serie bleiben unterscheidbar.
+// Fürs <title>: "Sa 7.11." bzw. "7.–9.11.", ohne Jahr (das steht beim Namen).
+// Kurz, damit Google den Titel nicht abschneidet, und Termine derselben Serie
+// bleiben unterscheidbar.
 function datumTitel(ev: Pick<PublicEvent, "startDay" | "endDay">): string {
   const a = parts(ev.startDay);
   const b = parts(ev.endDay);
-  const ende = `${b.d}.${b.m}.${b.y}`;
-  if (ev.startDay === ev.endDay) return ende;
-  if (a.y === b.y && a.m === b.m) return `${a.d}.–${ende}`;
-  return `${a.d}.${a.m}.–${ende}`;
+  if (ev.startDay === ev.endDay) return `${WOCHENTAGE[a.wd].slice(0, 2)} ${a.d}.${a.m}.`;
+  if (a.y === b.y && a.m === b.m) return `${a.d}.–${b.d}.${b.m}.`;
+  return `${a.d}.${a.m}.–${b.d}.${b.m}.`;
 }
 
 // Kalender-Plakette wie auf den Poster-Karten: "FR / 13 / NOV" (Jahr nur, wenn
@@ -627,8 +627,9 @@ export function renderEventPage(i: EventPageInput): string {
   const venue = ev.ort || "";
   const adr = adressTeile(ev);
   const bild = pickImage({typ: ev.typ, name: ev.name, slug});
-  const nameOhneJahr = ev.name.replace(new RegExp(`\\s*${jahr(ev.startDay)}$`), "");
-  const titel = `${nameOhneJahr}, ${datumTitel(ev)} – Mitfahrgelegenheit`;
+  // "{Name} 2026" bleibt wörtlich drin: so suchen die Leute ("krampuslauf bleiburg 2026").
+  const nameMitJahr = ev.name.includes(jahr(ev.startDay)) ? ev.name : `${ev.name} ${jahr(ev.startDay)}`;
+  const titel = `${nameMitJahr}, ${datumTitel(ev)} – Mitfahrgelegenheit`;
   // Google zeigt rund 60 Zeichen; den Seitennamen zeigt es ohnehin über dem Titel.
   const title = titel.length <= 48 ? `${titel} | EventRide` : titel;
   const zeit = ev.uhrzeit ? ` ab ${ev.uhrzeit} Uhr` : "";
