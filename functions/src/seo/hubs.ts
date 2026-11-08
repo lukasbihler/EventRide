@@ -100,7 +100,8 @@ export const KATEGORIE_HUBS: Hub[] = [
     "Ballkalender Kärnten {J}: {N} kommende Bälle nach Datum – Maturabälle, Feuerwehrbälle, Landjugendbälle.",
     "Maturaball, Feuerwehrball, Landjugendball oder Gschnas: Die Ballsaison ist in Kärnten ein Fixpunkt im Kalender. Hier findest du die Bälle in ganz Kärnten nach Datum – mit Ort, Einlass und Eintritt. Im Ballkleid will niemand selbst fahren: " + MITFAHREN),
   typHub("e5", "/krampuslaeufe-kaernten", "Krampus & Perchten", "Krampusläufe in Kärnten", "krampus",
-    "Krampusläufe in Kärnten", "Krampusläufe Kärnten {J} – alle Termine & Mitfahrgelegenheit",
+    // Perchten im Titel: laut Search Console 92 Impressionen für "perchtenlauf kärnten 2026" ohne Klick
+    "Krampusläufe in Kärnten", "Krampusläufe & Perchtenläufe Kärnten {J} – alle Termine",
     "Alle Krampusläufe und Perchtenläufe in Kärnten {J}: {N} Termine nach Datum.",
     "Wenn es früh dunkel wird, ziehen in ganz Kärnten wieder Krampusse und Perchten durch die Orte – mit Glocken, Fackeln und kunstvoll geschnitzten Larven. Hier findest du alle Krampusläufe, die in der EventRide App eingetragen sind, nach Datum sortiert. Zu jedem Lauf siehst du in der App, wer aus deiner Gegend hinfährt, damit du sicher hin und wieder heim kommst."),
   typHub("e6", "/festivals-kaernten", "Festivals & Open Air", "Festivals in Kärnten", "festival",
